@@ -1,10 +1,18 @@
 import type {
   ArtifactRequirement,
   CraftingRequirement,
+  GoldeniumCraftingConfig,
   HideoutConfig,
   Item,
   Journal,
 } from './types'
+import {
+  calculateGoldeniumRRR,
+  calculateTotalBonus,
+  ZONE_QUALITY_BONUS,
+  HIDEOUT_POWER_BONUS,
+  CRAFTING_BONUSES,
+} from '@/constants/goldenium'
 
 export const ARTIFACT_PATTERNS = {
   avalonian: /_AVALON$/i,
@@ -220,4 +228,72 @@ export const calculateJournalProfit = (
     profit: totalSilver - totalCost,
     fills_needed: fillsNeeded,
   }
+}
+
+/**
+ * Calculate RRR using the Goldenium formula
+ *
+ * This is the canonical implementation matching Goldenium All-In-One V2.6.0
+ *
+ * Formula: RRR = totalBonus / (1 + totalBonus)
+ *
+ * Total Bonus Components:
+ * - Zone Quality Bonus (Level 1-6)
+ * - Hideout Power Bonus (Level 1-9)
+ * - City Bonus (+15% if crafting in bonus city)
+ * - Focus Bonus (+59% if using focus)
+ * - Island Penalty (-18% if on island)
+ */
+export const getGoldeniumRRR = (config: GoldeniumCraftingConfig): number => {
+  const totalBonus = calculateTotalBonus({
+    zoneQuality: config.zoneQuality,
+    hideoutPower: config.hideoutPower,
+    useCityBonus: config.useCityBonus,
+    useFocus: config.useFocus,
+    isOnIsland: config.isOnIsland,
+  })
+
+  return calculateGoldeniumRRR(totalBonus)
+}
+
+/**
+ * Get the total bonus breakdown for display purposes
+ */
+export const getGoldeniumBonusBreakdown = (config: GoldeniumCraftingConfig): {
+  zoneQualityBonus: number
+  hideoutPowerBonus: number
+  cityBonus: number
+  focusBonus: number
+  islandPenalty: number
+  totalBonus: number
+  rrr: number
+} => {
+  const zoneQualityBonus = ZONE_QUALITY_BONUS[config.zoneQuality] ?? 0
+  const hideoutPowerBonus = HIDEOUT_POWER_BONUS[config.hideoutPower] ?? 0
+  const cityBonus = config.useCityBonus ? CRAFTING_BONUSES.CITY_BONUS : 0
+  const focusBonus = config.useFocus ? CRAFTING_BONUSES.FOCUS_BONUS : 0
+  const islandPenalty = config.isOnIsland ? CRAFTING_BONUSES.ISLAND_PENALTY : 0
+
+  const totalBonus = zoneQualityBonus + hideoutPowerBonus + cityBonus + focusBonus + islandPenalty
+  const rrr = calculateGoldeniumRRR(totalBonus)
+
+  return {
+    zoneQualityBonus,
+    hideoutPowerBonus,
+    cityBonus,
+    focusBonus,
+    islandPenalty,
+    totalBonus,
+    rrr,
+  }
+}
+
+/**
+ * Get RRR using the new Goldenium-based calculation
+ * This replaces the legacy getRRR and getHideoutRRR functions
+ */
+export const getTotalRRRGoldenium = (
+  config: GoldeniumCraftingConfig
+): number => {
+  return getGoldeniumRRR(config)
 }

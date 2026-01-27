@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { HideoutConfig, Item, SavedHideout } from '@/lib/crafting/types'
+import type { GoldeniumCraftingConfig, HideoutConfig, Item, SavedHideout } from '@/lib/crafting/types'
 
-export type CraftingCategory = 'gear' | 'food' | 'potion'
+export type CraftingCategory = 'gear' | 'food' | 'potion' | 'refining'
 
 export interface CraftingFilters {
   search: string
@@ -36,6 +36,8 @@ export interface CraftingInputs {
   manualJournalValue: number
   locationType: 'city' | 'hideout'
   hideoutConfig: HideoutConfig
+  // Goldenium RRR settings
+  goldeniumConfig: GoldeniumCraftingConfig
 }
 
 interface CraftingState {
@@ -98,6 +100,14 @@ export const useCraftingStore = create<CraftingState>()(
         manualJournalValue: 0,
         locationType: 'city',
         hideoutConfig: defaultHideout,
+        // Goldenium RRR defaults
+        goldeniumConfig: {
+          zoneQuality: 1,
+          hideoutPower: 1,
+          useCityBonus: false,
+          useFocus: false,
+          isOnIsland: false,
+        },
       },
       hideoutPresets: [],
       activeHideoutId: null,
