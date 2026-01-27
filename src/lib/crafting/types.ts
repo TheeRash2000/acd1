@@ -4,7 +4,7 @@ export interface Item {
   tier: number
   enchantment: number
   base_item_id: string
-  category: 'gear' | 'food' | 'potion'
+  category: 'gear' | 'food' | 'potion' | 'refining'
   subcategory: string
   is_artifact: boolean
   artifact_type?: 'avalonian' | 'elder' | 'keeper' | 'morgana' | 'heretic'
@@ -66,4 +66,29 @@ export interface SavedHideout extends HideoutConfig {
   id: string
   isFavorite: boolean
   lastUsed: number
+}
+
+/**
+ * Goldenium Crafting Configuration
+ * Used for calculating RRR using the Goldenium formula
+ */
+export interface GoldeniumCraftingConfig {
+  zoneQuality: number      // 1-6
+  hideoutPower: number     // 1-9
+  useCityBonus: boolean    // +15% if crafting in bonus city
+  useFocus: boolean        // +59% if using focus
+  isOnIsland: boolean      // -18% if on island
+}
+
+/**
+ * Refining Material Configuration
+ */
+export interface RefiningItem {
+  material_type: 'ore' | 'wood' | 'hide' | 'fiber' | 'stone'
+  tier: number
+  enchantment: number
+  input_id: string
+  output_id: string
+  input_amount: number
+  output_amount: number
 }

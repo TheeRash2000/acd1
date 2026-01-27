@@ -28,7 +28,10 @@ import { ProfitDisplay } from '@/components/crafting/ProfitDisplay'
 import { ItemVariants } from '@/components/crafting/ItemVariants'
 import { JournalCalculator } from '@/components/crafting/JournalCalculator'
 import { RRRSelector } from '@/components/crafting/RRRSelector'
+import { GoldeniumRRRSelector } from '@/components/crafting/GoldeniumRRRSelector'
+import { FocusCalculator } from '@/components/crafting/FocusCalculator'
 import { PriceHistoryChart } from '@/components/crafting/PriceHistoryChart'
+import { getGoldeniumRRR } from '@/lib/crafting/calculations'
 
 const CITY_LIST = [
   'Bridgewatch',
@@ -475,6 +478,31 @@ export default function CraftPage() {
             {category.toUpperCase()}
           </button>
         ))}
+        <span className="mx-2 text-muted-light dark:text-muted">|</span>
+        <Link
+          href="/craft/gear"
+          className="rounded border border-border-light px-3 py-1 text-text1-light hover:border-amber-400 hover:text-amber-300 dark:border-border dark:text-text1"
+        >
+          Gear (Goldenium)
+        </Link>
+        <Link
+          href="/craft/food"
+          className="rounded border border-border-light px-3 py-1 text-text1-light hover:border-amber-400 hover:text-amber-300 dark:border-border dark:text-text1"
+        >
+          Food (Goldenium)
+        </Link>
+        <Link
+          href="/craft/potions"
+          className="rounded border border-border-light px-3 py-1 text-text1-light hover:border-amber-400 hover:text-amber-300 dark:border-border dark:text-text1"
+        >
+          Potions (Goldenium)
+        </Link>
+        <Link
+          href="/craft/refining"
+          className="rounded border border-border-light px-3 py-1 text-text1-light hover:border-amber-400 hover:text-amber-300 dark:border-border dark:text-text1"
+        >
+          Refining (Goldenium)
+        </Link>
         <Link
           href="/craft/calculator"
           className="rounded border border-border-light px-3 py-1 text-text1-light hover:text-accent dark:border-border dark:text-text1"
