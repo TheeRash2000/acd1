@@ -1,0 +1,38 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Albion data (generated)
+/src/data/
+
+# Generated data
+/public/data/items.json
+/public/data/progression-tables.json
+/data/ao-bin-dumps/
+/src/lib/generated/itemsIndex.json

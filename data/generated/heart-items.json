@@ -1,0 +1,39 @@
+{
+  "factions": {
+    "FOREST": {
+      "tokenIds": [],
+      "heartIds": [],
+      "fragmentIds": []
+    },
+    "HIGHLAND": {
+      "tokenIds": [],
+      "heartIds": [],
+      "fragmentIds": []
+    },
+    "STEPPE": {
+      "tokenIds": [],
+      "heartIds": [],
+      "fragmentIds": []
+    },
+    "MOUNTAIN": {
+      "tokenIds": [],
+      "heartIds": [],
+      "fragmentIds": []
+    },
+    "SWAMP": {
+      "tokenIds": [],
+      "heartIds": [],
+      "fragmentIds": []
+    },
+    "CAERLEON": {
+      "tokenIds": [],
+      "heartIds": [],
+      "fragmentIds": []
+    }
+  },
+  "allMatches": {
+    "tokenIds": [],
+    "heartLikeIds": [],
+    "fragmentLikeIds": []
+  }
+}

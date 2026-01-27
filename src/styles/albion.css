@@ -1,0 +1,175 @@
+@tailwind components;
+
+@layer components {
+  .btn-forge {
+    @apply rounded-md bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500 px-3 py-2 text-sm font-semibold text-black shadow-[0_2px_10px_rgba(200,155,60,0.25)] transition hover:brightness-105;
+  }
+
+  .btn-secondary {
+    @apply rounded-md border border-slate-300/60 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:border-amber-400/60 hover:text-amber-700 dark:border-slate-700/60 dark:bg-[#0f1216] dark:text-slate-100;
+  }
+
+  .rune-border {
+    @apply relative rounded-xl border border-amber-200/60 dark:border-amber-700/40;
+    box-shadow: inset 0 0 0 1px rgba(180, 140, 60, 0.08);
+  }
+
+  .rune-border::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px dashed rgba(180, 140, 60, 0.2);
+    border-radius: 0.7rem;
+    pointer-events: none;
+  }
+
+  .parchment {
+    @apply bg-amber-50/90 text-slate-900 dark:bg-[#0f1216] dark:text-slate-100;
+  }
+
+  .glow-accent {
+    @apply transition;
+  }
+
+  .glow-accent:hover {
+    box-shadow: 0 0 14px rgba(200, 155, 60, 0.18);
+    border-color: rgba(200, 155, 60, 0.45);
+  }
+
+  .logo-emboss {
+    text-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.35),
+      0 -1px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  /* Item Rarity Colors */
+  .rarity-common {
+    @apply border-slate-400 dark:border-slate-600;
+  }
+
+  .rarity-uncommon {
+    @apply border-blue-500 dark:border-blue-400;
+  }
+
+  .rarity-rare {
+    @apply border-purple-500 dark:border-purple-400;
+  }
+
+  .rarity-epic {
+    @apply border-yellow-500 dark:border-yellow-400;
+  }
+
+  .rarity-legendary {
+    @apply border-orange-500 dark:border-orange-400;
+  }
+
+  /* Corner Bracket Styling (Albion signature) */
+  .bracket-corner {
+    position: relative;
+  }
+
+  .bracket-corner::before,
+  .bracket-corner::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    pointer-events: none;
+  }
+
+  .bracket-corner::before {
+    top: -4px;
+    left: -4px;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .bracket-corner::after {
+    top: -4px;
+    right: -4px;
+    border-left: none;
+    border-bottom: none;
+  }
+
+  .bracket-corner-bottom::before,
+  .bracket-corner-bottom::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    pointer-events: none;
+  }
+
+  .bracket-corner-bottom::before {
+    bottom: -4px;
+    left: -4px;
+    border-right: none;
+    border-top: none;
+  }
+
+  .bracket-corner-bottom::after {
+    bottom: -4px;
+    right: -4px;
+    border-left: none;
+    border-top: none;
+  }
+
+  /* Item Card - Albion Style */
+  .item-card {
+    @apply relative rounded-lg border-2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-3 shadow-lg transition-all hover:shadow-xl;
+    background-image: 
+      linear-gradient(135deg, rgba(180, 140, 60, 0.05) 0%, transparent 50%);
+  }
+
+  .item-card-icon {
+    @apply relative aspect-square w-full overflow-hidden rounded-md border border-amber-700/40 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center;
+  }
+
+  .item-card-name {
+    @apply mt-2 font-semibold text-sm text-slate-100;
+  }
+
+  .item-card-tier {
+    @apply text-xs text-amber-600 dark:text-amber-400 font-mono;
+  }
+
+  /* Stat Display Box */
+  .stat-box {
+    @apply rounded-lg bg-slate-800/60 border border-slate-700/60 p-3 text-center transition hover:bg-slate-800/80;
+  }
+
+  .stat-value {
+    @apply text-lg font-bold text-amber-400;
+  }
+
+  .stat-label {
+    @apply text-xs text-slate-400 uppercase tracking-wider;
+  }
+
+  /* Resource Badge */
+  .resource-badge {
+    @apply inline-block rounded-full px-3 py-1 text-xs font-semibold border;
+  }
+
+  .resource-badge.stone {
+    @apply bg-gray-600/20 border-gray-500 text-gray-300;
+  }
+
+  .resource-badge.wood {
+    @apply bg-amber-600/20 border-amber-600 text-amber-300;
+  }
+
+  .resource-badge.ore {
+    @apply bg-slate-500/20 border-slate-500 text-slate-300;
+  }
+
+  .resource-badge.fiber {
+    @apply bg-green-600/20 border-green-600 text-green-300;
+  }
+
+  .resource-badge.hide {
+    @apply bg-orange-600/20 border-orange-600 text-orange-300;
+  }
+}
