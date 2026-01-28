@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { calculateFocusCost, calculateTotalFCE, FCE_CONSTANTS } from '@/constants/goldenium'
+import { calculateFocusCost, calculateTotalFCE, FCE_CONSTANTS } from '@/constants/crafting-bonuses'
 import { getGearFCEData, getRefiningFCEData, FOOD_FCE, POTION_FCE } from '@/lib/crafting/fce-types'
 import type { Item } from '@/lib/crafting/types'
 
@@ -226,8 +226,6 @@ export function FocusCalculator({
       {/* Formula */}
       <div className="text-[10px] text-muted-light dark:text-muted">
         Formula: actualCost = baseCost / (2 ^ (totalFCE / 10000))
-        <br />
-        Source: Goldenium All-In-One V2.6.0
       </div>
     </div>
   )

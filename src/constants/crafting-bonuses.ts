@@ -1,8 +1,8 @@
 /**
- * Goldenium Spreadsheet Constants
- * Source: Copy of Goldenium All-In-One V2.6.0.xlsx
+ * Crafting Bonuses and Constants
+ * Source: Albion Online crafting data spreadsheet
  *
- * These values are extracted directly from the Goldenium spreadsheet
+ * These values are extracted directly from the crafting spreadsheet
  * and should match exactly.
  */
 
@@ -60,7 +60,7 @@ export const HIDEOUT_POWER_LABELS: Record<number, string> = {
 } as const
 
 /**
- * Calculate RRR using the Goldenium formula
+ * Calculate RRR (Resource Return Rate)
  *
  * Formula: RRR = totalBonus / (1 + totalBonus)
  * Which is equivalent to: RRR = 1 - 100 / (100 + totalBonus * 100)
@@ -68,7 +68,7 @@ export const HIDEOUT_POWER_LABELS: Record<number, string> = {
  * @param totalBonus - The sum of all applicable bonuses (as decimal, e.g., 0.15 for 15%)
  * @returns The Return Rate Reduction as a decimal (e.g., 0.13 for 13%)
  */
-export function calculateGoldeniumRRR(totalBonus: number): number {
+export function calculateRRR(totalBonus: number): number {
   if (totalBonus <= 0) return 0
   return totalBonus / (1 + totalBonus)
 }
@@ -166,7 +166,7 @@ export function calculateTotalFCE(inputs: FCEInputs): number {
 
 /**
  * Crafting Category Types
- * From Goldenium: 1=Mage, 2=Hunter, 3=Warrior, 4=Tools
+ * Categories: 1=Mage, 2=Hunter, 3=Warrior, 4=Tools
  */
 export type CraftingCategoryId = 1 | 2 | 3 | 4
 

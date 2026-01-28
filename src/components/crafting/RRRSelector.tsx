@@ -1,297 +1,172 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { HideoutConfig, SavedHideout } from '@/lib/crafting/types'
+import type { GoldeniumCraftingConfig } from '@/lib/crafting/types'
+import {
+  ZONE_QUALITY_LABELS,
+  HIDEOUT_POWER_LABELS,
+  CRAFTING_BONUSES,
+} from '@/constants/crafting-bonuses'
+import { getGoldeniumBonusBreakdown } from '@/lib/crafting/calculations'
 
 interface Props {
-  locationType: 'city' | 'hideout'
-  selectedCity: string
-  hideoutConfig: HideoutConfig
-  onLocationTypeChange: (value: 'city' | 'hideout') => void
-  onCityChange: (value: string) => void
-  onHideoutChange: (value: HideoutConfig) => void
-  computedRrr: number
-  savedHideouts?: SavedHideout[]
-  activeHideoutId?: string | null
-  onSavePreset?: () => void
-  onSelectPreset?: (id: string | null) => void
-  onRemovePreset?: (id: string) => void
+  config: GoldeniumCraftingConfig
+  onChange: (config: GoldeniumCraftingConfig) => void
+  itemBonusCity?: string
+  currentCity?: string
 }
 
-const CITY_OPTIONS = [
-  'Bridgewatch',
-  'Lymhurst',
-  'Martlock',
-  'Thetford',
-  'Fort Sterling',
-  'Caerleon',
-  'Brecilien',
-]
-
-const FOOD_PRESETS = [
-  { label: 'No nutrition bonus (0%)', value: 0 },
-  { label: 'Basic meal (+15%)', value: 15 },
-  { label: 'Hearty meal (+30%)', value: 30 },
-  { label: 'Feast (+50%)', value: 50 },
-  { label: 'Maxed nutrition (+100%)', value: 100 },
-]
-
-const MAP_QUALITY_PRESETS = [
-  { label: 'Normal map (0%)', value: 0 },
-  { label: 'Well-kept map (+5%)', value: 5 },
-  { label: 'High quality (+10%)', value: 10 },
-  { label: 'Excellent (+15%)', value: 15 },
-  { label: 'Pristine (+20%)', value: 20 },
-]
-
 export function RRRSelector({
-  locationType,
-  selectedCity,
-  hideoutConfig,
-  onLocationTypeChange,
-  onCityChange,
-  onHideoutChange,
-  computedRrr,
-  savedHideouts = [],
-  activeHideoutId = null,
-  onSavePreset,
-  onSelectPreset,
-  onRemovePreset,
+  config,
+  onChange,
+  itemBonusCity,
+  currentCity,
 }: Props) {
-  const safeHideout = useMemo(
-    () => ({
-      ...hideoutConfig,
-      foodBonus: hideoutConfig.foodBonus ?? 0,
-      mapQualityBonus: hideoutConfig.mapQualityBonus ?? 0,
-      energyLevel: hideoutConfig.energyLevel ?? 100,
-    }),
-    [hideoutConfig]
-  )
-  const rrrLabel = useMemo(() => `${(computedRrr * 100).toFixed(1)}%`, [computedRrr])
-  const capped = computedRrr >= 0.5
+  const breakdown = useMemo(() => getGoldeniumBonusBreakdown(config), [config])
+
+  const formatPercent = (value: number) => `${(value * 100).toFixed(2)}%`
+  const formatPercentSigned = (value: number) => {
+    const percent = (value * 100).toFixed(2)
+    return value >= 0 ? `+${percent}%` : `${percent}%`
+  }
+
+  // Auto-detect city bonus based on item and current city
+  const isCityBonusAvailable = itemBonusCity && currentCity &&
+    itemBonusCity.toLowerCase() === currentCity.toLowerCase()
 
   return (
     <div className="grid gap-3 rounded-xl border border-border-light bg-bg-light/60 p-3 text-xs dark:border-border dark:bg-bg/60">
       <div className="flex items-center justify-between text-[11px] uppercase text-muted-light dark:text-muted">
-        <span>RRR Location</span>
-        <span className={capped ? 'text-amber-300' : 'text-text1-light dark:text-text1'}>
-          {rrrLabel}
+        <span>RRR Calculator</span>
+        <span className={breakdown.rrr >= 0.5 ? 'text-amber-300' : 'text-green-400'}>
+          {formatPercent(breakdown.rrr)} RRR
         </span>
       </div>
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="radio"
-            value="city"
-            checked={locationType === 'city'}
-            onChange={() => onLocationTypeChange('city')}
-          />
-          Royal City
-        </label>
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="radio"
-            value="hideout"
-            checked={locationType === 'hideout'}
-            onChange={() => onLocationTypeChange('hideout')}
-          />
-          Hideout
-        </label>
-      </div>
 
-      {locationType === 'city' ? (
+      {/* Zone Quality */}
+      <div className="grid gap-1">
+        <label className="text-[11px] text-muted-light dark:text-muted">Zone Quality</label>
         <select
-          value={selectedCity}
-          onChange={(event) => onCityChange(event.target.value)}
+          value={config.zoneQuality}
+          onChange={(e) => onChange({ ...config, zoneQuality: parseInt(e.target.value, 10) })}
           className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
         >
-          {CITY_OPTIONS.map((city) => (
-            <option key={city} value={city}>
-              {city}
+          {Object.entries(ZONE_QUALITY_LABELS).map(([level, label]) => (
+            <option key={level} value={level}>
+              {label}
             </option>
           ))}
         </select>
-      ) : (
-        <div className="grid gap-2">
-          {savedHideouts.length > 0 && (
-            <div className="grid gap-1 text-xs">
-              <label className="text-muted-light dark:text-muted">Saved Hideouts</label>
-              <div className="flex gap-2">
-                <select
-                  value={activeHideoutId ?? ''}
-                  onChange={(event) => onSelectPreset?.(event.target.value || null)}
-                  className="flex-1 rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
-                >
-                  <option value="">Select hideout...</option>
-                  {savedHideouts.map((hideout) => (
-                    <option key={hideout.id} value={hideout.id}>
-                      {hideout.name || 'Unnamed'} {hideout.guild ? `(${hideout.guild})` : ''}
-                    </option>
-                  ))}
-                </select>
-                {activeHideoutId && onRemovePreset && (
-                  <button
-                    type="button"
-                    className="btn-secondary px-2 text-xs"
-                    onClick={() => onRemovePreset(activeHideoutId)}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+      </div>
+
+      {/* Hideout Power */}
+      <div className="grid gap-1">
+        <label className="text-[11px] text-muted-light dark:text-muted">Hideout Power</label>
+        <select
+          value={config.hideoutPower}
+          onChange={(e) => onChange({ ...config, hideoutPower: parseInt(e.target.value, 10) })}
+          className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
+        >
+          {Object.entries(HIDEOUT_POWER_LABELS).map(([level, label]) => (
+            <option key={level} value={level}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Bonus Toggles */}
+      <div className="grid gap-2">
+        <label className="flex items-center gap-2 text-xs">
           <input
-            type="text"
-            placeholder="Hideout name"
-            value={safeHideout.name}
-            onChange={(event) => onHideoutChange({ ...safeHideout, name: event.target.value })}
-            className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
+            type="checkbox"
+            checked={config.useCityBonus}
+            onChange={(e) => onChange({ ...config, useCityBonus: e.target.checked })}
           />
-          <input
-            type="text"
-            placeholder="Guild name (optional)"
-            value={safeHideout.guild ?? ''}
-            onChange={(event) =>
-              onHideoutChange({ ...safeHideout, guild: event.target.value })
-            }
-            className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
-          />
-          <div className="grid gap-2 sm:grid-cols-2">
-            <select
-              value={safeHideout.buildingType}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  buildingType: event.target.value as HideoutConfig['buildingType'],
-                })
-              }
-              className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
-            >
-              <option value="forge">Forge</option>
-              <option value="workbench">Workbench</option>
-              <option value="tailor">Tailor</option>
-              <option value="toolmaker">Toolmaker</option>
-              <option value="alchemy">Alchemy Lab</option>
-              <option value="cook">Kitchen</option>
-            </select>
-            <select
-              value={safeHideout.buildingTier}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  buildingTier: parseInt(event.target.value, 10),
-                })
-              }
-              className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
-            >
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((tier) => (
-                <option key={tier} value={tier}>
-                  Tier {tier}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid gap-1 text-xs">
-            <label className="text-muted-light dark:text-muted">Food preset</label>
-            <select
-              value={safeHideout.foodBonus}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  foodBonus: parseInt(event.target.value, 10),
-                })
-              }
-              className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
-            >
-              {FOOD_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid gap-1 text-xs">
-            <label className="text-muted-light dark:text-muted">Map quality</label>
-            <select
-              value={safeHideout.mapQualityBonus}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  mapQualityBonus: parseInt(event.target.value, 10),
-                })
-              }
-              className="rounded border border-border-light bg-bg-light px-3 py-2 text-xs dark:border-border dark:bg-bg"
-            >
-              {MAP_QUALITY_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid gap-1">
-            <div className="flex items-center justify-between text-[11px] text-muted-light dark:text-muted">
-              <span>Food Bonus</span>
-              <span>{safeHideout.foodBonus}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={safeHideout.foodBonus}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  foodBonus: parseInt(event.target.value, 10),
-                })
-              }
-            />
-          </div>
-          <div className="grid gap-1">
-            <div className="flex items-center justify-between text-[11px] text-muted-light dark:text-muted">
-              <span>Map Quality Bonus</span>
-              <span>{safeHideout.mapQualityBonus}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="20"
-              value={safeHideout.mapQualityBonus}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  mapQualityBonus: parseInt(event.target.value, 10),
-                })
-              }
-            />
-          </div>
-          <div className="grid gap-1">
-            <div className="flex items-center justify-between text-[11px] text-muted-light dark:text-muted">
-              <span>Energy Level</span>
-              <span>{safeHideout.energyLevel}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={safeHideout.energyLevel}
-              onChange={(event) =>
-                onHideoutChange({
-                  ...safeHideout,
-                  energyLevel: parseInt(event.target.value, 10),
-                })
-              }
-            />
-          </div>
-          {onSavePreset && (
-            <button type="button" className="btn-secondary px-3 py-2 text-xs" onClick={onSavePreset}>
-              Save Hideout Preset
-            </button>
+          <span>
+            City Bonus (+15%)
+            {itemBonusCity && (
+              <span className="ml-1 text-[10px] text-muted-light dark:text-muted">
+                ({itemBonusCity})
+              </span>
+            )}
+          </span>
+          {isCityBonusAvailable && !config.useCityBonus && (
+            <span className="text-[10px] text-amber-300">Available!</span>
           )}
+        </label>
+
+        <label className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.useFocus}
+            onChange={(e) => onChange({ ...config, useFocus: e.target.checked })}
+          />
+          <span>Use Focus (+59%)</span>
+        </label>
+
+        <label className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={config.isOnIsland}
+            onChange={(e) => onChange({ ...config, isOnIsland: e.target.checked })}
+          />
+          <span>On Island (-18%)</span>
+        </label>
+      </div>
+
+      {/* Breakdown */}
+      <div className="grid gap-1 rounded-lg border border-border/40 bg-bg-light/30 p-2 text-[11px] dark:bg-bg/30">
+        <div className="text-[10px] uppercase tracking-wide text-muted-light dark:text-muted">
+          Bonus Breakdown
         </div>
-      )}
-      {capped && <div className="text-[11px] text-amber-300">RRR capped at 50%.</div>}
+        <div className="grid gap-0.5">
+          <div className="flex justify-between">
+            <span>Zone Quality:</span>
+            <span>{formatPercentSigned(breakdown.zoneQualityBonus)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Hideout Power:</span>
+            <span>{formatPercentSigned(breakdown.hideoutPowerBonus)}</span>
+          </div>
+          {config.useCityBonus && (
+            <div className="flex justify-between text-green-400">
+              <span>City Bonus:</span>
+              <span>{formatPercentSigned(breakdown.cityBonus)}</span>
+            </div>
+          )}
+          {config.useFocus && (
+            <div className="flex justify-between text-blue-400">
+              <span>Focus Bonus:</span>
+              <span>{formatPercentSigned(breakdown.focusBonus)}</span>
+            </div>
+          )}
+          {config.isOnIsland && (
+            <div className="flex justify-between text-red-400">
+              <span>Island Penalty:</span>
+              <span>{formatPercentSigned(breakdown.islandPenalty)}</span>
+            </div>
+          )}
+          <div className="mt-1 flex justify-between border-t border-border/40 pt-1 font-medium">
+            <span>Total Bonus:</span>
+            <span>{formatPercentSigned(breakdown.totalBonus)}</span>
+          </div>
+          <div className="flex justify-between font-bold text-text1-light dark:text-text1">
+            <span>RRR:</span>
+            <span className={breakdown.rrr >= 0.5 ? 'text-amber-300' : 'text-green-400'}>
+              {formatPercent(breakdown.rrr)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Formula explanation */}
+      <div className="text-[10px] text-muted-light dark:text-muted">
+        Formula: RRR = totalBonus / (1 + totalBonus)
+      </div>
     </div>
   )
 }
+
+// Export alias for backward compatibility
+export { RRRSelector as GoldeniumRRRSelector }

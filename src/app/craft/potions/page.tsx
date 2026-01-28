@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { useCraftingStore } from '@/stores/crafting'
-import { GoldeniumRRRSelector } from '@/components/crafting/GoldeniumRRRSelector'
+import { GoldeniumRRRSelector } from '@/components/crafting/RRRSelector'
 import { FocusCalculator } from '@/components/crafting/FocusCalculator'
 import { POTION_FCE } from '@/lib/crafting/fce-types'
 import { getGoldeniumRRR } from '@/lib/crafting/calculations'
