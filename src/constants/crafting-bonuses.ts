@@ -29,11 +29,52 @@ export const HIDEOUT_POWER_BONUS: Record<number, number> = {
   9: 0.56,     // 56%
 } as const
 
-// Fixed Crafting Bonuses
+/**
+ * Production Bonuses (from wiki)
+ * Formula: RRR = 1 - 1/(1 + ProductionBonus/100) = bonus / (1 + bonus)
+ *
+ * Royal Cities:
+ * - Base: 18%
+ * - Refining Specialty: +40% (total 58%)
+ * - Crafting Specialty: +15% (total 33%)
+ *
+ * Islands:
+ * - Royal Island (no specialty): 0%
+ * - Royal Island (with specialty): 40%
+ *
+ * Other locations:
+ * - Outlands Hideout/Rests: 15%
+ * - Roads Hideout: 10%
+ *
+ * Focus adds flat +59%
+ */
+export const PRODUCTION_BONUSES = {
+  // Royal City bonuses
+  ROYAL_CITY_BASE: 0.18,           // 18% base in any royal city
+  REFINING_SPECIALTY: 0.40,         // +40% for refining in specialty city (total 58%)
+  CRAFTING_SPECIALTY: 0.15,         // +15% for crafting in specialty city (total 33%)
+
+  // Focus
+  FOCUS_BONUS: 0.59,                // +59% when using focus
+
+  // Island bonuses
+  ROYAL_ISLAND_BASE: 0,             // 0% base on royal islands
+  ROYAL_ISLAND_SPECIALTY: 0.40,     // +40% if specialty applies
+
+  // Hideout/other location bonuses
+  OUTLANDS_HIDEOUT: 0.15,           // 15% in Outlands hideouts/rests
+  ROADS_HIDEOUT: 0.10,              // 10% in Roads hideouts
+
+  // Daily bonus
+  DAILY_BONUS_SMALL: 0.10,          // 10% daily bonus
+  DAILY_BONUS_LARGE: 0.20,          // 20% daily bonus
+} as const
+
+// Legacy alias for backward compatibility
 export const CRAFTING_BONUSES = {
-  CITY_BONUS: 0.15,       // +15% when crafting in bonus city
+  CITY_BONUS: 0.15,       // +15% when crafting in bonus city (crafting specialty)
   FOCUS_BONUS: 0.59,      // +59% when using focus
-  ISLAND_PENALTY: -0.18,  // -18% when crafting on island
+  ISLAND_PENALTY: -0.18,  // -18% when crafting on island (relative to city base)
 } as const
 
 // Zone Quality Labels for UI
