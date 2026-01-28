@@ -292,7 +292,13 @@ export default function RefiningPage() {
       const refinedPrice = refinedPrices[key] ?? 0
 
       // Get lower tier refined price for cost calculation
-      const lowerTierKey = row.tier > 2 ? `${row.tier - 1}.${row.enchant}` : null
+      // For enchanted items: use previous enchant at SAME tier (T5.2 needs T5.1)
+      // For base items: use previous tier at base enchant (T5 needs T4)
+      const lowerTierKey = row.enchant > 0
+        ? `${row.tier}.${row.enchant - 1}`  // Same tier, previous enchant
+        : row.tier > 2
+          ? `${row.tier - 1}.0`              // Previous tier, base enchant
+          : null                              // T2 has no lower tier requirement
       const lowerTierPrice = lowerTierKey ? (refinedPrices[lowerTierKey] ?? 0) : 0
 
       // Calculate cost with return rate
@@ -305,8 +311,8 @@ export default function RefiningPage() {
       const sellValue = refinedPrice * amount * (1 - marketTax)
       const profit = sellValue - totalCost
 
-      // Profit per focus
-      const totalFocusUsed = useFocus ? actualFocus * amount : 0
+      // Profit per focus (always calculate for comparison, even when not using focus)
+      const totalFocusUsed = actualFocus * amount
       const profitPerFocus = totalFocusUsed > 0 ? profit / totalFocusUsed : 0
 
       // Profit margin (ROI)
@@ -393,7 +399,7 @@ export default function RefiningPage() {
   // Calculate min/max for color scaling
   const { minProfit, maxProfit, minProfitPerFocus, maxProfitPerFocus, minMargin, maxMargin } = useMemo(() => {
     const profits = filteredAndSortedData.map(r => r.profit).filter(p => p !== 0)
-    const ppf = filteredAndSortedData.filter(r => useFocus && r.profitPerFocus !== 0).map(r => r.profitPerFocus)
+    const ppf = filteredAndSortedData.filter(r => r.profitPerFocus !== 0).map(r => r.profitPerFocus)
     const margins = filteredAndSortedData.map(r => r.profitMargin).filter(m => m !== 0)
 
     return {
@@ -404,7 +410,7 @@ export default function RefiningPage() {
       minMargin: Math.min(...margins, 0),
       maxMargin: Math.max(...margins, 0),
     }
-  }, [filteredAndSortedData, useFocus])
+  }, [filteredAndSortedData])
 
   // Best values for highlighting
   const bestValues = useMemo(() => {
@@ -412,13 +418,11 @@ export default function RefiningPage() {
     if (withPrices.length === 0) return { bestProfit: null, bestProfitPerFocus: null, bestMargin: null }
 
     const bestProfit = withPrices.reduce((best, r) => r.profit > (best?.profit ?? -Infinity) ? r : best, null as RefiningRowData | null)
-    const bestProfitPerFocus = useFocus
-      ? withPrices.reduce((best, r) => r.profitPerFocus > (best?.profitPerFocus ?? -Infinity) ? r : best, null as RefiningRowData | null)
-      : null
+    const bestProfitPerFocus = withPrices.reduce((best, r) => r.profitPerFocus > (best?.profitPerFocus ?? -Infinity) ? r : best, null as RefiningRowData | null)
     const bestMargin = withPrices.reduce((best, r) => r.profitMargin > (best?.profitMargin ?? -Infinity) ? r : best, null as RefiningRowData | null)
 
     return { bestProfit, bestProfitPerFocus, bestMargin }
-  }, [filteredAndSortedData, useFocus])
+  }, [filteredAndSortedData])
 
   const updateRawPrice = (key: string, value: number) => {
     setRawPrices((prev) => ({ ...prev, [key]: value }))
@@ -905,7 +909,7 @@ export default function RefiningPage() {
               </div>
             </div>
           )}
-          {useFocus && bestValues.bestProfitPerFocus && (
+          {bestValues.bestProfitPerFocus && (
             <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
               <div className="text-xs text-muted-light dark:text-muted">Best Profit/Focus</div>
               <div className="text-lg font-bold text-blue-400">
@@ -997,7 +1001,7 @@ export default function RefiningPage() {
             {filteredAndSortedData.map((row) => {
               const key = `${row.tier}.${row.enchant}`
               const isBestProfit = bestValues.bestProfit?.label === row.label
-              const isBestPPF = useFocus && bestValues.bestProfitPerFocus?.label === row.label
+              const isBestPPF = bestValues.bestProfitPerFocus?.label === row.label
               const isBestMargin = bestValues.bestMargin?.label === row.label
               const hasPrices = row.rawPrice > 0 && row.refinedPrice > 0
 
@@ -1069,7 +1073,7 @@ export default function RefiningPage() {
                         <>
                           <span className="font-medium ml-1">{row.resources.lowerTierQty}x</span>
                           <div className="h-6 w-6 rounded border border-amber-400/50 bg-amber-400/10 text-[9px] flex items-center justify-center text-amber-300">
-                            T{row.tier - 1}
+                            {row.enchant > 0 ? `T${row.tier}.${row.enchant - 1}` : `T${row.tier - 1}`}
                           </div>
                         </>
                       )}
@@ -1083,9 +1087,9 @@ export default function RefiningPage() {
 
                   {/* Profit/Focus */}
                   <td className={`px-3 py-2 text-right font-mono ${
-                    useFocus && hasPrices ? getValueColor(row.profitPerFocus, minProfitPerFocus, maxProfitPerFocus) : ''
+                    hasPrices && row.actualFocus > 0 ? getValueColor(row.profitPerFocus, minProfitPerFocus, maxProfitPerFocus) : ''
                   }`}>
-                    {useFocus && row.actualFocus > 0 ? row.profitPerFocus.toFixed(2) : '-'}
+                    {hasPrices && row.actualFocus > 0 ? row.profitPerFocus.toFixed(2) : '-'}
                   </td>
 
                   {/* ROI % */}
