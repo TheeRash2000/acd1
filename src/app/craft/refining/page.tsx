@@ -1,11 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   REFINING_BASE_FOCUS,
   REFINING_BONUS_CITIES,
-  REFINING_OUTPUT_NAMES,
   REFINING_FCE_VALUES,
   type RefiningMaterialType,
 } from '@/lib/crafting/fce-types'
@@ -24,13 +23,26 @@ const MATERIAL_TYPES: {
   rawName: string
   outputName: string
   bonusCity: string
+  rawItemPrefix: string
+  refinedItemPrefix: string
 }[] = [
-  { id: 'hide', name: 'Leather', rawName: 'Hide', outputName: 'Leather', bonusCity: 'Martlock' },
-  { id: 'fiber', name: 'Cloth', rawName: 'Fiber', outputName: 'Cloth', bonusCity: 'Lymhurst' },
-  { id: 'ore', name: 'Metal', rawName: 'Ore', outputName: 'Metal Bar', bonusCity: 'Thetford' },
-  { id: 'wood', name: 'Planks', rawName: 'Wood', outputName: 'Planks', bonusCity: 'Fort Sterling' },
-  { id: 'stone', name: 'Stone Block', rawName: 'Stone', outputName: 'Stone Block', bonusCity: 'Bridgewatch' },
+  { id: 'hide', name: 'Leather', rawName: 'Hide', outputName: 'Leather', bonusCity: 'Martlock', rawItemPrefix: 'HIDE', refinedItemPrefix: 'LEATHER' },
+  { id: 'fiber', name: 'Cloth', rawName: 'Fiber', outputName: 'Cloth', bonusCity: 'Lymhurst', rawItemPrefix: 'FIBER', refinedItemPrefix: 'CLOTH' },
+  { id: 'ore', name: 'Metal', rawName: 'Ore', outputName: 'Metal Bar', bonusCity: 'Thetford', rawItemPrefix: 'ORE', refinedItemPrefix: 'METALBAR' },
+  { id: 'wood', name: 'Planks', rawName: 'Wood', outputName: 'Planks', bonusCity: 'Fort Sterling', rawItemPrefix: 'WOOD', refinedItemPrefix: 'PLANKS' },
+  { id: 'stone', name: 'Stone Block', rawName: 'Stone', outputName: 'Stone Block', bonusCity: 'Bridgewatch', rawItemPrefix: 'ROCK', refinedItemPrefix: 'STONEBLOCK' },
 ]
+
+// City to API location mapping
+const CITY_API_LOCATIONS: Record<string, string> = {
+  'Bridgewatch': 'Bridgewatch',
+  'Fort Sterling': 'Fort Sterling',
+  'Lymhurst': 'Lymhurst',
+  'Martlock': 'Martlock',
+  'Thetford': 'Thetford',
+  'Caerleon': 'Caerleon',
+  'Brecilien': 'Brecilien',
+}
 
 const CITIES = [
   'Bridgewatch',
@@ -42,7 +54,7 @@ const CITIES = [
   'Brecilien',
 ]
 
-const SERVERS = ['Americas (West)', 'Americas (East)', 'Europe', 'Asia']
+const SERVERS = ['West', 'East', 'Europe', 'Asia']
 
 const MARKET_TAX_OPTIONS = [
   { label: 'No Tax', value: 0 },
@@ -110,6 +122,16 @@ interface RefiningRowData {
   cost: number
   profit: number
   profitPerFocus: number
+  rawItemId: string
+  refinedItemId: string
+}
+
+// Generate item ID for Albion Online Data API
+function getItemId(prefix: string, tier: number, enchant: number): string {
+  if (enchant === 0) {
+    return `T${tier}_${prefix}`
+  }
+  return `T${tier}_${prefix}_LEVEL${enchant}@${enchant}`
 }
 
 export default function RefiningPage() {
@@ -117,9 +139,10 @@ export default function RefiningPage() {
   const [materialType, setMaterialType] = useState<RefiningMaterialType>('hide')
   const [amount, setAmount] = useState(1)
   const [shopFee, setShopFee] = useState(100)
-  const [returnRate, setReturnRate] = useState(15.2)
   const [marketTax, setMarketTax] = useState(0)
   const [useFocus, setUseFocus] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   // Mastery levels per tier
   const [masteryT4, setMasteryT4] = useState(0)
@@ -129,15 +152,39 @@ export default function RefiningPage() {
   const [masteryT8, setMasteryT8] = useState(0)
 
   // Cities
-  const [startCity, setStartCity] = useState('Martlock')
-  const [endCity, setEndCity] = useState('Martlock')
-  const [server, setServer] = useState('Americas (West)')
+  const [craftCity, setCraftCity] = useState('Martlock')
+  const [sellCity, setSellCity] = useState('Martlock')
+  const [server, setServer] = useState('West')
 
   // Prices - keyed by "tier.enchant"
   const [rawPrices, setRawPrices] = useState<Record<string, number>>({})
   const [refinedPrices, setRefinedPrices] = useState<Record<string, number>>({})
 
   const materialData = MATERIAL_TYPES.find((m) => m.id === materialType)
+
+  // Auto-calculate RRR based on city and material
+  const calculatedRRR = useMemo(() => {
+    if (!materialData) return 0
+
+    let totalBonus = 0
+
+    // City bonus: +15% if crafting in the material's bonus city
+    const isInBonusCity = craftCity === materialData.bonusCity
+    if (isInBonusCity) {
+      totalBonus += CRAFTING_BONUSES.CITY_BONUS // 0.15
+    }
+
+    // Focus bonus: +59% if using focus
+    if (useFocus) {
+      totalBonus += CRAFTING_BONUSES.FOCUS_BONUS // 0.59
+    }
+
+    // Calculate RRR using formula: RRR = totalBonus / (1 + totalBonus)
+    return calculateRRR(totalBonus)
+  }, [craftCity, materialData, useFocus])
+
+  // Display RRR as percentage
+  const returnRatePercent = calculatedRRR * 100
 
   // Get mastery for a specific tier
   const getMasteryForTier = useCallback((tier: number): number => {
@@ -161,7 +208,7 @@ export default function RefiningPage() {
     const totalFCE = calculateTotalFCE({
       masteryLevel: mastery,
       masteryFCEPerLevel: FCE_CONSTANTS.MASTERY_FCE_PER_LEVEL,
-      specLevel: 0, // Using mastery only for now
+      specLevel: 0,
       specUniqueFCE: REFINING_FCE_VALUES.specUniqueFCE,
       mutualSpecLevels: 0,
       specMutualFCE: REFINING_FCE_VALUES.specMutualFCE,
@@ -172,6 +219,8 @@ export default function RefiningPage() {
 
   // Calculate row data
   const rowData = useMemo((): RefiningRowData[] => {
+    if (!materialData) return []
+
     return REFINING_ROWS.map((row) => {
       const key = `${row.tier}.${row.enchant}`
       const baseFocus = EXTENDED_BASE_FOCUS[key] ?? 0
@@ -185,9 +234,9 @@ export default function RefiningPage() {
       const lowerTierKey = row.tier > 2 ? `${row.tier - 1}.${row.enchant}` : null
       const lowerTierPrice = lowerTierKey ? (refinedPrices[lowerTierKey] ?? 0) : 0
 
-      // Calculate cost
-      const rawCost = rawPrice * resources.rawQty * (1 - returnRate / 100)
-      const lowerTierCost = lowerTierPrice * resources.lowerTierQty * (1 - returnRate / 100)
+      // Calculate cost with return rate
+      const rawCost = rawPrice * resources.rawQty * (1 - calculatedRRR)
+      const lowerTierCost = lowerTierPrice * resources.lowerTierQty * (1 - calculatedRRR)
       const stationCost = (shopFee / 100) * baseFocus
       const totalCost = (rawCost + lowerTierCost + stationCost) * amount
 
@@ -198,6 +247,10 @@ export default function RefiningPage() {
       // Profit per focus
       const totalFocusUsed = useFocus ? actualFocus * amount : 0
       const profitPerFocus = totalFocusUsed > 0 ? profit / totalFocusUsed : 0
+
+      // Item IDs for API
+      const rawItemId = getItemId(materialData.rawItemPrefix, row.tier, row.enchant)
+      const refinedItemId = getItemId(materialData.refinedItemPrefix, row.tier, row.enchant)
 
       return {
         tier: row.tier,
@@ -211,9 +264,11 @@ export default function RefiningPage() {
         cost: totalCost,
         profit,
         profitPerFocus,
+        rawItemId,
+        refinedItemId,
       }
     })
-  }, [rawPrices, refinedPrices, amount, shopFee, returnRate, marketTax, useFocus, calculateActualFocus])
+  }, [materialData, rawPrices, refinedPrices, amount, shopFee, calculatedRRR, marketTax, useFocus, calculateActualFocus])
 
   const updateRawPrice = (key: string, value: number) => {
     setRawPrices((prev) => ({ ...prev, [key]: value }))
@@ -223,10 +278,95 @@ export default function RefiningPage() {
     setRefinedPrices((prev) => ({ ...prev, [key]: value }))
   }
 
+  // Fetch prices from Albion Online Data Project API
   const handleGetPrices = async () => {
-    // TODO: Implement price fetching from API
-    console.log('Fetching prices for', materialType, 'from', startCity, 'to', endCity)
+    if (!materialData) return
+
+    setIsLoading(true)
+
+    try {
+      // Build list of all item IDs needed
+      const rawItems: string[] = []
+      const refinedItems: string[] = []
+
+      for (const row of REFINING_ROWS) {
+        rawItems.push(getItemId(materialData.rawItemPrefix, row.tier, row.enchant))
+        refinedItems.push(getItemId(materialData.refinedItemPrefix, row.tier, row.enchant))
+      }
+
+      const allItems = [...rawItems, ...refinedItems]
+      const itemList = allItems.join(',')
+
+      // Fetch from API - use craftCity for raw materials, sellCity for refined
+      const buyLocation = CITY_API_LOCATIONS[craftCity] || craftCity
+      const sellLocation = CITY_API_LOCATIONS[sellCity] || sellCity
+      const locations = buyLocation === sellLocation ? buyLocation : `${buyLocation},${sellLocation}`
+
+      const apiUrl = `https://west.albion-online-data.com/api/v2/stats/prices/${itemList}?locations=${locations}`
+
+      console.log('Fetching prices from:', apiUrl)
+
+      const response = await fetch(apiUrl)
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // Parse the response and update prices
+      const newRawPrices: Record<string, number> = {}
+      const newRefinedPrices: Record<string, number> = {}
+
+      for (const item of data) {
+        const itemId = item.item_id
+        const city = item.city
+
+        // Find which row this corresponds to
+        for (const row of REFINING_ROWS) {
+          const key = `${row.tier}.${row.enchant}`
+          const rawItemId = getItemId(materialData.rawItemPrefix, row.tier, row.enchant)
+          const refinedItemId = getItemId(materialData.refinedItemPrefix, row.tier, row.enchant)
+
+          // Raw items - use buy price from craft city
+          if (itemId === rawItemId && city === buyLocation) {
+            // Use sell_price_min as that's what we'd buy at
+            const price = item.sell_price_min || 0
+            if (price > 0) {
+              newRawPrices[key] = price
+            }
+          }
+
+          // Refined items - use sell price from sell city
+          if (itemId === refinedItemId && city === sellLocation) {
+            // Use sell_price_min as that's the current market price
+            const price = item.sell_price_min || 0
+            if (price > 0) {
+              newRefinedPrices[key] = price
+            }
+          }
+        }
+      }
+
+      setRawPrices((prev) => ({ ...prev, ...newRawPrices }))
+      setRefinedPrices((prev) => ({ ...prev, ...newRefinedPrices }))
+      setLastUpdated(new Date())
+
+      console.log('Prices updated:', { raw: newRawPrices, refined: newRefinedPrices })
+    } catch (error) {
+      console.error('Failed to fetch prices:', error)
+      alert('Failed to fetch prices. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
+
+  // Auto-set craft city to bonus city when material changes
+  useEffect(() => {
+    if (materialData) {
+      setCraftCity(materialData.bonusCity)
+      setSellCity(materialData.bonusCity)
+    }
+  }, [materialData])
 
   return (
     <section className="grid gap-6">
@@ -272,7 +412,7 @@ export default function RefiningPage() {
       </nav>
 
       {/* Controls Row 1 */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
         {/* Type */}
         <div className="grid gap-1">
           <label className="text-xs text-muted-light dark:text-muted">Type</label>
@@ -311,16 +451,15 @@ export default function RefiningPage() {
           />
         </div>
 
-        {/* Rate of Return */}
+        {/* Return Rate (Auto-calculated) */}
         <div className="grid gap-1">
-          <label className="text-xs text-muted-light dark:text-muted">Rate Of Return %</label>
-          <input
-            type="number"
-            step="0.1"
-            value={returnRate}
-            onChange={(e) => setReturnRate(Math.max(0, parseFloat(e.target.value) || 0))}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
-          />
+          <label className="text-xs text-muted-light dark:text-muted">
+            Return Rate %
+            <span className="ml-1 text-[10px] text-green-400">(auto)</span>
+          </label>
+          <div className="flex items-center rounded border border-green-500/50 bg-green-500/10 px-3 py-2 text-sm font-bold text-green-400">
+            {returnRatePercent.toFixed(2)}%
+          </div>
         </div>
 
         {/* Market Tax */}
@@ -335,6 +474,20 @@ export default function RefiningPage() {
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+
+        {/* Use Focus Toggle */}
+        <div className="grid gap-1">
+          <label className="text-xs text-muted-light dark:text-muted">Focus</label>
+          <label className="flex h-[38px] cursor-pointer items-center gap-2 rounded border border-border-light bg-surface-light px-3 dark:border-border dark:bg-surface">
+            <input
+              type="checkbox"
+              checked={useFocus}
+              onChange={(e) => setUseFocus(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span className="text-sm">Use Focus</span>
+          </label>
         </div>
       </div>
 
@@ -401,25 +554,34 @@ export default function RefiningPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="grid gap-1">
           <label className="text-xs text-muted-light dark:text-muted">
-            Start City <span className="text-[10px] text-muted-light/60 dark:text-muted/60">(buy)</span>
+            Craft City
+            {materialData && craftCity === materialData.bonusCity && (
+              <span className="ml-1 text-green-400">+15%</span>
+            )}
           </label>
           <select
-            value={startCity}
-            onChange={(e) => setStartCity(e.target.value)}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
+            value={craftCity}
+            onChange={(e) => setCraftCity(e.target.value)}
+            className={`rounded border px-3 py-2 text-sm ${
+              materialData && craftCity === materialData.bonusCity
+                ? 'border-green-500/50 bg-green-500/10'
+                : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'
+            }`}
           >
             {CITIES.map((city) => (
-              <option key={city} value={city}>{city}</option>
+              <option key={city} value={city}>
+                {city} {materialData && city === materialData.bonusCity ? '(Bonus)' : ''}
+              </option>
             ))}
           </select>
         </div>
         <div className="grid gap-1">
           <label className="text-xs text-muted-light dark:text-muted">
-            End City <span className="text-[10px] text-muted-light/60 dark:text-muted/60">(sell)</span>
+            Sell City
           </label>
           <select
-            value={endCity}
-            onChange={(e) => setEndCity(e.target.value)}
+            value={sellCity}
+            onChange={(e) => setSellCity(e.target.value)}
             className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
           >
             {CITIES.map((city) => (
@@ -444,30 +606,46 @@ export default function RefiningPage() {
           <button
             type="button"
             onClick={handleGetPrices}
-            className="rounded bg-green-500 px-4 py-2 text-sm font-bold text-black hover:bg-green-400"
+            disabled={isLoading}
+            className="rounded bg-green-500 px-4 py-2 text-sm font-bold text-black hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            GET CURRENT PRICES
+            {isLoading ? 'LOADING...' : 'GET PRICES'}
           </button>
         </div>
       </div>
 
-      {/* Use Focus Toggle */}
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="useFocus"
-          checked={useFocus}
-          onChange={(e) => setUseFocus(e.target.checked)}
-          className="h-4 w-4"
-        />
-        <label htmlFor="useFocus" className="text-sm">
-          Use Focus (adds +59% return rate when checked)
-        </label>
+      {/* RRR Breakdown */}
+      <div className="rounded-lg border border-border-light bg-surface-light/50 p-3 dark:border-border dark:bg-surface/50">
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <div>
+            <span className="text-muted-light dark:text-muted">Return Rate: </span>
+            <span className="font-bold text-green-400">{returnRatePercent.toFixed(2)}%</span>
+          </div>
+          <div className="text-xs text-muted-light dark:text-muted">
+            {craftCity === materialData?.bonusCity && (
+              <span className="mr-2 text-green-400">+15% City Bonus</span>
+            )}
+            {useFocus && (
+              <span className="text-blue-400">+59% Focus Bonus</span>
+            )}
+            {craftCity !== materialData?.bonusCity && !useFocus && (
+              <span>No bonuses active</span>
+            )}
+          </div>
+          {lastUpdated && (
+            <div className="ml-auto text-xs text-muted-light dark:text-muted">
+              Last updated: {lastUpdated.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Material Type Header */}
       <h2 className="font-display text-xl font-bold text-amber-400 uppercase">
         {materialData?.name}
+        <span className="ml-2 text-sm font-normal text-muted-light dark:text-muted">
+          (Bonus City: {materialData?.bonusCity})
+        </span>
       </h2>
 
       {/* Data Table */}
@@ -558,22 +736,22 @@ export default function RefiningPage() {
 
                   {/* Focus */}
                   <td className="px-3 py-2 text-right font-mono">
-                    {row.baseFocus}
+                    {useFocus ? Math.round(row.actualFocus) : row.baseFocus}
                   </td>
 
                   {/* Profit/Focus */}
                   <td className={`px-3 py-2 text-right font-mono ${row.profitPerFocus > 0 ? 'text-green-400' : row.profitPerFocus < 0 ? 'text-red-400' : ''}`}>
-                    {useFocus && row.actualFocus > 0 ? row.profitPerFocus.toFixed(2) : '0'}
+                    {useFocus && row.actualFocus > 0 ? row.profitPerFocus.toFixed(2) : '-'}
                   </td>
 
                   {/* Cost */}
                   <td className="px-3 py-2 text-right font-mono">
-                    {row.cost > 0 ? row.cost.toFixed(0) : '0'}
+                    {row.cost > 0 ? row.cost.toLocaleString() : '-'}
                   </td>
 
                   {/* Profit */}
                   <td className={`px-3 py-2 text-right font-mono ${row.profit > 0 ? 'text-green-400' : row.profit < 0 ? 'text-red-400' : ''}`}>
-                    {row.profit !== 0 ? row.profit.toFixed(0) : '0'}
+                    {row.rawPrice > 0 || row.refinedPrice > 0 ? row.profit.toLocaleString() : '-'}
                   </td>
                 </tr>
               )
@@ -583,12 +761,16 @@ export default function RefiningPage() {
       </div>
 
       {/* Info Box */}
-      <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-300">
-        <strong>Bonus City for {materialData?.name}:</strong> {materialData?.bonusCity}
-        <br />
-        <span className="text-xs text-muted-light dark:text-muted">
-          Craft in the bonus city for +15% return rate. No hideout bonuses apply to refining.
-        </span>
+      <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm">
+        <div className="text-amber-300">
+          <strong>How RRR is calculated:</strong>
+        </div>
+        <ul className="mt-1 list-inside list-disc text-xs text-muted-light dark:text-muted">
+          <li>City Bonus: +15% when crafting in {materialData?.bonusCity} (bonus city for {materialData?.name})</li>
+          <li>Focus Bonus: +59% when using focus</li>
+          <li>Formula: RRR = totalBonus / (1 + totalBonus)</li>
+          <li className="mt-1 text-amber-300/70">Note: No hideout bonuses apply to refining</li>
+        </ul>
       </div>
     </section>
   )
