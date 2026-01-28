@@ -565,6 +565,593 @@ export const TOME_SPECIALIZATIONS: SpecializationNode[] = [
 ]
 
 // =============================================================================
+// GATHERING
+// =============================================================================
+
+export const FIBER_HARVESTER_MASTERY = createMastery(
+  'mastery_fiber_harvester',
+  'Fiber Harvester',
+  'gathering',
+  ['spec_fiber_t2', 'spec_fiber_t3', 'spec_fiber_t4', 'spec_fiber_t5', 'spec_fiber_t6', 'spec_fiber_t7', 'spec_fiber_t8']
+)
+
+export const FIBER_HARVESTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_fiber_t2', 'Novice Fiber Harvester', 'mastery_fiber_harvester', 'T2_FIBER', 'simple'),
+  createSpec('spec_fiber_t3', 'Journeyman Fiber Harvester', 'mastery_fiber_harvester', 'T3_FIBER', 'simple'),
+  createSpec('spec_fiber_t4', 'Adept Fiber Harvester', 'mastery_fiber_harvester', 'T4_FIBER', 'simple'),
+  createSpec('spec_fiber_t5', 'Expert Fiber Harvester', 'mastery_fiber_harvester', 'T5_FIBER', 'simple'),
+  createSpec('spec_fiber_t6', 'Master Fiber Harvester', 'mastery_fiber_harvester', 'T6_FIBER', 'simple'),
+  createSpec('spec_fiber_t7', 'Grandmaster Fiber Harvester', 'mastery_fiber_harvester', 'T7_FIBER', 'simple'),
+  createSpec('spec_fiber_t8', 'Elder Fiber Harvester', 'mastery_fiber_harvester', 'T8_FIBER', 'simple'),
+]
+
+export const HIDE_SKINNER_MASTERY = createMastery(
+  'mastery_hide_skinner',
+  'Hide Skinner',
+  'gathering',
+  ['spec_hide_t2', 'spec_hide_t3', 'spec_hide_t4', 'spec_hide_t5', 'spec_hide_t6', 'spec_hide_t7', 'spec_hide_t8']
+)
+
+export const HIDE_SKINNER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_hide_t2', 'Novice Hide Skinner', 'mastery_hide_skinner', 'T2_HIDE', 'simple'),
+  createSpec('spec_hide_t3', 'Journeyman Hide Skinner', 'mastery_hide_skinner', 'T3_HIDE', 'simple'),
+  createSpec('spec_hide_t4', 'Adept Hide Skinner', 'mastery_hide_skinner', 'T4_HIDE', 'simple'),
+  createSpec('spec_hide_t5', 'Expert Hide Skinner', 'mastery_hide_skinner', 'T5_HIDE', 'simple'),
+  createSpec('spec_hide_t6', 'Master Hide Skinner', 'mastery_hide_skinner', 'T6_HIDE', 'simple'),
+  createSpec('spec_hide_t7', 'Grandmaster Hide Skinner', 'mastery_hide_skinner', 'T7_HIDE', 'simple'),
+  createSpec('spec_hide_t8', 'Elder Hide Skinner', 'mastery_hide_skinner', 'T8_HIDE', 'simple'),
+]
+
+export const ORE_MINER_MASTERY = createMastery(
+  'mastery_ore_miner',
+  'Ore Miner',
+  'gathering',
+  ['spec_ore_t2', 'spec_ore_t3', 'spec_ore_t4', 'spec_ore_t5', 'spec_ore_t6', 'spec_ore_t7', 'spec_ore_t8']
+)
+
+export const ORE_MINER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_ore_t2', 'Novice Ore Miner', 'mastery_ore_miner', 'T2_ORE', 'simple'),
+  createSpec('spec_ore_t3', 'Journeyman Ore Miner', 'mastery_ore_miner', 'T3_ORE', 'simple'),
+  createSpec('spec_ore_t4', 'Adept Ore Miner', 'mastery_ore_miner', 'T4_ORE', 'simple'),
+  createSpec('spec_ore_t5', 'Expert Ore Miner', 'mastery_ore_miner', 'T5_ORE', 'simple'),
+  createSpec('spec_ore_t6', 'Master Ore Miner', 'mastery_ore_miner', 'T6_ORE', 'simple'),
+  createSpec('spec_ore_t7', 'Grandmaster Ore Miner', 'mastery_ore_miner', 'T7_ORE', 'simple'),
+  createSpec('spec_ore_t8', 'Elder Ore Miner', 'mastery_ore_miner', 'T8_ORE', 'simple'),
+]
+
+export const ROCK_QUARRIER_MASTERY = createMastery(
+  'mastery_rock_quarrier',
+  'Rock Quarrier',
+  'gathering',
+  ['spec_rock_t2', 'spec_rock_t3', 'spec_rock_t4', 'spec_rock_t5', 'spec_rock_t6', 'spec_rock_t7', 'spec_rock_t8']
+)
+
+export const ROCK_QUARRIER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_rock_t2', 'Novice Rock Quarrier', 'mastery_rock_quarrier', 'T2_ROCK', 'simple'),
+  createSpec('spec_rock_t3', 'Journeyman Rock Quarrier', 'mastery_rock_quarrier', 'T3_ROCK', 'simple'),
+  createSpec('spec_rock_t4', 'Adept Rock Quarrier', 'mastery_rock_quarrier', 'T4_ROCK', 'simple'),
+  createSpec('spec_rock_t5', 'Expert Rock Quarrier', 'mastery_rock_quarrier', 'T5_ROCK', 'simple'),
+  createSpec('spec_rock_t6', 'Master Rock Quarrier', 'mastery_rock_quarrier', 'T6_ROCK', 'simple'),
+  createSpec('spec_rock_t7', 'Grandmaster Rock Quarrier', 'mastery_rock_quarrier', 'T7_ROCK', 'simple'),
+  createSpec('spec_rock_t8', 'Elder Rock Quarrier', 'mastery_rock_quarrier', 'T8_ROCK', 'simple'),
+]
+
+export const WOOD_LUMBERJACK_MASTERY = createMastery(
+  'mastery_wood_lumberjack',
+  'Wood Lumberjack',
+  'gathering',
+  ['spec_wood_t2', 'spec_wood_t3', 'spec_wood_t4', 'spec_wood_t5', 'spec_wood_t6', 'spec_wood_t7', 'spec_wood_t8']
+)
+
+export const WOOD_LUMBERJACK_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_wood_t2', 'Novice Wood Lumberjack', 'mastery_wood_lumberjack', 'T2_WOOD', 'simple'),
+  createSpec('spec_wood_t3', 'Journeyman Wood Lumberjack', 'mastery_wood_lumberjack', 'T3_WOOD', 'simple'),
+  createSpec('spec_wood_t4', 'Adept Wood Lumberjack', 'mastery_wood_lumberjack', 'T4_WOOD', 'simple'),
+  createSpec('spec_wood_t5', 'Expert Wood Lumberjack', 'mastery_wood_lumberjack', 'T5_WOOD', 'simple'),
+  createSpec('spec_wood_t6', 'Master Wood Lumberjack', 'mastery_wood_lumberjack', 'T6_WOOD', 'simple'),
+  createSpec('spec_wood_t7', 'Grandmaster Wood Lumberjack', 'mastery_wood_lumberjack', 'T7_WOOD', 'simple'),
+  createSpec('spec_wood_t8', 'Elder Wood Lumberjack', 'mastery_wood_lumberjack', 'T8_WOOD', 'simple'),
+]
+
+export const FISHERMAN_MASTERY = createMastery(
+  'mastery_fisherman',
+  'Fisherman',
+  'gathering',
+  ['spec_fish_t1', 'spec_fish_t2', 'spec_fish_t3', 'spec_fish_t4', 'spec_fish_t5', 'spec_fish_t6', 'spec_fish_t7', 'spec_fish_t8']
+)
+
+export const FISHERMAN_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_fish_t1', 'Trainee Fisherman', 'mastery_fisherman', 'T1_FISH', 'simple'),
+  createSpec('spec_fish_t2', 'Novice Fisherman', 'mastery_fisherman', 'T2_FISH', 'simple'),
+  createSpec('spec_fish_t3', 'Journeyman Fisherman', 'mastery_fisherman', 'T3_FISH', 'simple'),
+  createSpec('spec_fish_t4', 'Adept Fisherman', 'mastery_fisherman', 'T4_FISH', 'simple'),
+  createSpec('spec_fish_t5', 'Expert Fisherman', 'mastery_fisherman', 'T5_FISH', 'simple'),
+  createSpec('spec_fish_t6', 'Master Fisherman', 'mastery_fisherman', 'T6_FISH', 'simple'),
+  createSpec('spec_fish_t7', 'Grandmaster Fisherman', 'mastery_fisherman', 'T7_FISH', 'simple'),
+  createSpec('spec_fish_t8', 'Elder Fisherman', 'mastery_fisherman', 'T8_FISH', 'simple'),
+]
+
+// =============================================================================
+// REFINING
+// =============================================================================
+
+export const WEAVER_MASTERY = createMastery(
+  'mastery_weaver',
+  'Weaver',
+  'refining',
+  ['spec_cloth_t2', 'spec_cloth_t3', 'spec_cloth_t4', 'spec_cloth_t5', 'spec_cloth_t6', 'spec_cloth_t7', 'spec_cloth_t8']
+)
+
+export const WEAVER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_cloth_t2', 'Novice Weaver', 'mastery_weaver', 'T2_CLOTH', 'simple'),
+  createSpec('spec_cloth_t3', 'Journeyman Weaver', 'mastery_weaver', 'T3_CLOTH', 'simple'),
+  createSpec('spec_cloth_t4', 'Adept Weaver', 'mastery_weaver', 'T4_CLOTH', 'simple'),
+  createSpec('spec_cloth_t5', 'Expert Weaver', 'mastery_weaver', 'T5_CLOTH', 'simple'),
+  createSpec('spec_cloth_t6', 'Master Weaver', 'mastery_weaver', 'T6_CLOTH', 'simple'),
+  createSpec('spec_cloth_t7', 'Grandmaster Weaver', 'mastery_weaver', 'T7_CLOTH', 'simple'),
+  createSpec('spec_cloth_t8', 'Elder Weaver', 'mastery_weaver', 'T8_CLOTH', 'simple'),
+]
+
+export const TANNER_MASTERY = createMastery(
+  'mastery_tanner',
+  'Tanner',
+  'refining',
+  ['spec_leather_t2', 'spec_leather_t3', 'spec_leather_t4', 'spec_leather_t5', 'spec_leather_t6', 'spec_leather_t7', 'spec_leather_t8']
+)
+
+export const TANNER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_leather_t2', 'Novice Tanner', 'mastery_tanner', 'T2_LEATHER', 'simple'),
+  createSpec('spec_leather_t3', 'Journeyman Tanner', 'mastery_tanner', 'T3_LEATHER', 'simple'),
+  createSpec('spec_leather_t4', 'Adept Tanner', 'mastery_tanner', 'T4_LEATHER', 'simple'),
+  createSpec('spec_leather_t5', 'Expert Tanner', 'mastery_tanner', 'T5_LEATHER', 'simple'),
+  createSpec('spec_leather_t6', 'Master Tanner', 'mastery_tanner', 'T6_LEATHER', 'simple'),
+  createSpec('spec_leather_t7', 'Grandmaster Tanner', 'mastery_tanner', 'T7_LEATHER', 'simple'),
+  createSpec('spec_leather_t8', 'Elder Tanner', 'mastery_tanner', 'T8_LEATHER', 'simple'),
+]
+
+export const SMELTER_MASTERY = createMastery(
+  'mastery_smelter',
+  'Smelter',
+  'refining',
+  ['spec_metalbar_t2', 'spec_metalbar_t3', 'spec_metalbar_t4', 'spec_metalbar_t5', 'spec_metalbar_t6', 'spec_metalbar_t7', 'spec_metalbar_t8']
+)
+
+export const SMELTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_metalbar_t2', 'Novice Smelter', 'mastery_smelter', 'T2_METALBAR', 'simple'),
+  createSpec('spec_metalbar_t3', 'Journeyman Smelter', 'mastery_smelter', 'T3_METALBAR', 'simple'),
+  createSpec('spec_metalbar_t4', 'Adept Smelter', 'mastery_smelter', 'T4_METALBAR', 'simple'),
+  createSpec('spec_metalbar_t5', 'Expert Smelter', 'mastery_smelter', 'T5_METALBAR', 'simple'),
+  createSpec('spec_metalbar_t6', 'Master Smelter', 'mastery_smelter', 'T6_METALBAR', 'simple'),
+  createSpec('spec_metalbar_t7', 'Grandmaster Smelter', 'mastery_smelter', 'T7_METALBAR', 'simple'),
+  createSpec('spec_metalbar_t8', 'Elder Smelter', 'mastery_smelter', 'T8_METALBAR', 'simple'),
+]
+
+export const STONEMASON_MASTERY = createMastery(
+  'mastery_stonemason',
+  'Stonemason',
+  'refining',
+  ['spec_stoneblock_t2', 'spec_stoneblock_t3', 'spec_stoneblock_t4', 'spec_stoneblock_t5', 'spec_stoneblock_t6', 'spec_stoneblock_t7', 'spec_stoneblock_t8']
+)
+
+export const STONEMASON_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_stoneblock_t2', 'Novice Stonemason', 'mastery_stonemason', 'T2_STONEBLOCK', 'simple'),
+  createSpec('spec_stoneblock_t3', 'Journeyman Stonemason', 'mastery_stonemason', 'T3_STONEBLOCK', 'simple'),
+  createSpec('spec_stoneblock_t4', 'Adept Stonemason', 'mastery_stonemason', 'T4_STONEBLOCK', 'simple'),
+  createSpec('spec_stoneblock_t5', 'Expert Stonemason', 'mastery_stonemason', 'T5_STONEBLOCK', 'simple'),
+  createSpec('spec_stoneblock_t6', 'Master Stonemason', 'mastery_stonemason', 'T6_STONEBLOCK', 'simple'),
+  createSpec('spec_stoneblock_t7', 'Grandmaster Stonemason', 'mastery_stonemason', 'T7_STONEBLOCK', 'simple'),
+  createSpec('spec_stoneblock_t8', 'Elder Stonemason', 'mastery_stonemason', 'T8_STONEBLOCK', 'simple'),
+]
+
+export const WOODWORKER_MASTERY = createMastery(
+  'mastery_woodworker',
+  'Woodworker',
+  'refining',
+  ['spec_planks_t2', 'spec_planks_t3', 'spec_planks_t4', 'spec_planks_t5', 'spec_planks_t6', 'spec_planks_t7', 'spec_planks_t8']
+)
+
+export const WOODWORKER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_planks_t2', 'Novice Woodworker', 'mastery_woodworker', 'T2_PLANKS', 'simple'),
+  createSpec('spec_planks_t3', 'Journeyman Woodworker', 'mastery_woodworker', 'T3_PLANKS', 'simple'),
+  createSpec('spec_planks_t4', 'Adept Woodworker', 'mastery_woodworker', 'T4_PLANKS', 'simple'),
+  createSpec('spec_planks_t5', 'Expert Woodworker', 'mastery_woodworker', 'T5_PLANKS', 'simple'),
+  createSpec('spec_planks_t6', 'Master Woodworker', 'mastery_woodworker', 'T6_PLANKS', 'simple'),
+  createSpec('spec_planks_t7', 'Grandmaster Woodworker', 'mastery_woodworker', 'T7_PLANKS', 'simple'),
+  createSpec('spec_planks_t8', 'Elder Woodworker', 'mastery_woodworker', 'T8_PLANKS', 'simple'),
+]
+
+// =============================================================================
+// CRAFTING - WEAPONS
+// =============================================================================
+
+export const TOOLMAKER_MASTERY = createMastery(
+  'mastery_toolmaker',
+  'Toolmaker',
+  'crafting',
+  ['spec_tool_t2', 'spec_tool_t3', 'spec_tool_t4', 'spec_tool_t5', 'spec_tool_t6', 'spec_tool_t7', 'spec_tool_t8']
+)
+
+export const TOOLMAKER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_tool_t2', 'Novice Toolmaker', 'mastery_toolmaker', 'T2_TOOL', 'simple'),
+  createSpec('spec_tool_t3', 'Journeyman Toolmaker', 'mastery_toolmaker', 'T3_TOOL', 'simple'),
+  createSpec('spec_tool_t4', 'Adept Toolmaker', 'mastery_toolmaker', 'T4_TOOL', 'simple'),
+  createSpec('spec_tool_t5', 'Expert Toolmaker', 'mastery_toolmaker', 'T5_TOOL', 'simple'),
+  createSpec('spec_tool_t6', 'Master Toolmaker', 'mastery_toolmaker', 'T6_TOOL', 'simple'),
+  createSpec('spec_tool_t7', 'Grandmaster Toolmaker', 'mastery_toolmaker', 'T7_TOOL', 'simple'),
+  createSpec('spec_tool_t8', 'Elder Toolmaker', 'mastery_toolmaker', 'T8_TOOL', 'simple'),
+]
+
+export const AXE_CRAFTER_MASTERY = createMastery(
+  'mastery_axe_crafter',
+  'Axe Crafter',
+  'crafting',
+  ['spec_axe_craft_t4', 'spec_axe_craft_t5', 'spec_axe_craft_t6', 'spec_axe_craft_t7', 'spec_axe_craft_t8']
+)
+
+export const AXE_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_axe_craft_t4', 'Adept Axe Crafter', 'mastery_axe_crafter', 'T4_2H_AXE', 'simple'),
+  createSpec('spec_axe_craft_t5', 'Expert Axe Crafter', 'mastery_axe_crafter', 'T5_2H_AXE', 'simple'),
+  createSpec('spec_axe_craft_t6', 'Master Axe Crafter', 'mastery_axe_crafter', 'T6_2H_AXE', 'simple'),
+  createSpec('spec_axe_craft_t7', 'Grandmaster Axe Crafter', 'mastery_axe_crafter', 'T7_2H_AXE', 'simple'),
+  createSpec('spec_axe_craft_t8', 'Elder Axe Crafter', 'mastery_axe_crafter', 'T8_2H_AXE', 'simple'),
+]
+
+export const SWORD_CRAFTER_MASTERY = createMastery(
+  'mastery_sword_crafter',
+  'Sword Crafter',
+  'crafting',
+  ['spec_sword_craft_t4', 'spec_sword_craft_t5', 'spec_sword_craft_t6', 'spec_sword_craft_t7', 'spec_sword_craft_t8']
+)
+
+export const SWORD_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_sword_craft_t4', 'Adept Sword Crafter', 'mastery_sword_crafter', 'T4_MAIN_SWORD', 'simple'),
+  createSpec('spec_sword_craft_t5', 'Expert Sword Crafter', 'mastery_sword_crafter', 'T5_MAIN_SWORD', 'simple'),
+  createSpec('spec_sword_craft_t6', 'Master Sword Crafter', 'mastery_sword_crafter', 'T6_MAIN_SWORD', 'simple'),
+  createSpec('spec_sword_craft_t7', 'Grandmaster Sword Crafter', 'mastery_sword_crafter', 'T7_MAIN_SWORD', 'simple'),
+  createSpec('spec_sword_craft_t8', 'Elder Sword Crafter', 'mastery_sword_crafter', 'T8_MAIN_SWORD', 'simple'),
+]
+
+export const MACE_CRAFTER_MASTERY = createMastery(
+  'mastery_mace_crafter',
+  'Mace Crafter',
+  'crafting',
+  ['spec_mace_craft_t4', 'spec_mace_craft_t5', 'spec_mace_craft_t6', 'spec_mace_craft_t7', 'spec_mace_craft_t8']
+)
+
+export const MACE_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_mace_craft_t4', 'Adept Mace Crafter', 'mastery_mace_crafter', 'T4_MAIN_MACE', 'simple'),
+  createSpec('spec_mace_craft_t5', 'Expert Mace Crafter', 'mastery_mace_crafter', 'T5_MAIN_MACE', 'simple'),
+  createSpec('spec_mace_craft_t6', 'Master Mace Crafter', 'mastery_mace_crafter', 'T6_MAIN_MACE', 'simple'),
+  createSpec('spec_mace_craft_t7', 'Grandmaster Mace Crafter', 'mastery_mace_crafter', 'T7_MAIN_MACE', 'simple'),
+  createSpec('spec_mace_craft_t8', 'Elder Mace Crafter', 'mastery_mace_crafter', 'T8_MAIN_MACE', 'simple'),
+]
+
+export const HAMMER_CRAFTER_MASTERY = createMastery(
+  'mastery_hammer_crafter',
+  'Hammer Crafter',
+  'crafting',
+  ['spec_hammer_craft_t4', 'spec_hammer_craft_t5', 'spec_hammer_craft_t6', 'spec_hammer_craft_t7', 'spec_hammer_craft_t8']
+)
+
+export const HAMMER_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_hammer_craft_t4', 'Adept Hammer Crafter', 'mastery_hammer_crafter', 'T4_MAIN_HAMMER', 'simple'),
+  createSpec('spec_hammer_craft_t5', 'Expert Hammer Crafter', 'mastery_hammer_crafter', 'T5_MAIN_HAMMER', 'simple'),
+  createSpec('spec_hammer_craft_t6', 'Master Hammer Crafter', 'mastery_hammer_crafter', 'T6_MAIN_HAMMER', 'simple'),
+  createSpec('spec_hammer_craft_t7', 'Grandmaster Hammer Crafter', 'mastery_hammer_crafter', 'T7_MAIN_HAMMER', 'simple'),
+  createSpec('spec_hammer_craft_t8', 'Elder Hammer Crafter', 'mastery_hammer_crafter', 'T8_MAIN_HAMMER', 'simple'),
+]
+
+export const CROSSBOW_CRAFTER_MASTERY = createMastery(
+  'mastery_crossbow_crafter',
+  'Crossbow Crafter',
+  'crafting',
+  ['spec_crossbow_craft_t4', 'spec_crossbow_craft_t5', 'spec_crossbow_craft_t6', 'spec_crossbow_craft_t7', 'spec_crossbow_craft_t8']
+)
+
+export const CROSSBOW_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_crossbow_craft_t4', 'Adept Crossbow Crafter', 'mastery_crossbow_crafter', 'T4_2H_CROSSBOW', 'simple'),
+  createSpec('spec_crossbow_craft_t5', 'Expert Crossbow Crafter', 'mastery_crossbow_crafter', 'T5_2H_CROSSBOW', 'simple'),
+  createSpec('spec_crossbow_craft_t6', 'Master Crossbow Crafter', 'mastery_crossbow_crafter', 'T6_2H_CROSSBOW', 'simple'),
+  createSpec('spec_crossbow_craft_t7', 'Grandmaster Crossbow Crafter', 'mastery_crossbow_crafter', 'T7_2H_CROSSBOW', 'simple'),
+  createSpec('spec_crossbow_craft_t8', 'Elder Crossbow Crafter', 'mastery_crossbow_crafter', 'T8_2H_CROSSBOW', 'simple'),
+]
+
+export const BOW_CRAFTER_MASTERY = createMastery(
+  'mastery_bow_crafter',
+  'Bow Crafter',
+  'crafting',
+  ['spec_bow_craft_t4', 'spec_bow_craft_t5', 'spec_bow_craft_t6', 'spec_bow_craft_t7', 'spec_bow_craft_t8']
+)
+
+export const BOW_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_bow_craft_t4', 'Adept Bow Crafter', 'mastery_bow_crafter', 'T4_2H_BOW', 'simple'),
+  createSpec('spec_bow_craft_t5', 'Expert Bow Crafter', 'mastery_bow_crafter', 'T5_2H_BOW', 'simple'),
+  createSpec('spec_bow_craft_t6', 'Master Bow Crafter', 'mastery_bow_crafter', 'T6_2H_BOW', 'simple'),
+  createSpec('spec_bow_craft_t7', 'Grandmaster Bow Crafter', 'mastery_bow_crafter', 'T7_2H_BOW', 'simple'),
+  createSpec('spec_bow_craft_t8', 'Elder Bow Crafter', 'mastery_bow_crafter', 'T8_2H_BOW', 'simple'),
+]
+
+export const SPEAR_CRAFTER_MASTERY = createMastery(
+  'mastery_spear_crafter',
+  'Spear Crafter',
+  'crafting',
+  ['spec_spear_craft_t4', 'spec_spear_craft_t5', 'spec_spear_craft_t6', 'spec_spear_craft_t7', 'spec_spear_craft_t8']
+)
+
+export const SPEAR_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_spear_craft_t4', 'Adept Spear Crafter', 'mastery_spear_crafter', 'T4_MAIN_SPEAR', 'simple'),
+  createSpec('spec_spear_craft_t5', 'Expert Spear Crafter', 'mastery_spear_crafter', 'T5_MAIN_SPEAR', 'simple'),
+  createSpec('spec_spear_craft_t6', 'Master Spear Crafter', 'mastery_spear_crafter', 'T6_MAIN_SPEAR', 'simple'),
+  createSpec('spec_spear_craft_t7', 'Grandmaster Spear Crafter', 'mastery_spear_crafter', 'T7_MAIN_SPEAR', 'simple'),
+  createSpec('spec_spear_craft_t8', 'Elder Spear Crafter', 'mastery_spear_crafter', 'T8_MAIN_SPEAR', 'simple'),
+]
+
+export const DAGGER_CRAFTER_MASTERY = createMastery(
+  'mastery_dagger_crafter',
+  'Dagger Crafter',
+  'crafting',
+  ['spec_dagger_craft_t4', 'spec_dagger_craft_t5', 'spec_dagger_craft_t6', 'spec_dagger_craft_t7', 'spec_dagger_craft_t8']
+)
+
+export const DAGGER_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_dagger_craft_t4', 'Adept Dagger Crafter', 'mastery_dagger_crafter', 'T4_MAIN_DAGGER', 'simple'),
+  createSpec('spec_dagger_craft_t5', 'Expert Dagger Crafter', 'mastery_dagger_crafter', 'T5_MAIN_DAGGER', 'simple'),
+  createSpec('spec_dagger_craft_t6', 'Master Dagger Crafter', 'mastery_dagger_crafter', 'T6_MAIN_DAGGER', 'simple'),
+  createSpec('spec_dagger_craft_t7', 'Grandmaster Dagger Crafter', 'mastery_dagger_crafter', 'T7_MAIN_DAGGER', 'simple'),
+  createSpec('spec_dagger_craft_t8', 'Elder Dagger Crafter', 'mastery_dagger_crafter', 'T8_MAIN_DAGGER', 'simple'),
+]
+
+export const QUARTERSTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_quarterstaff_crafter',
+  'Quarterstaff Crafter',
+  'crafting',
+  ['spec_quarterstaff_craft_t4', 'spec_quarterstaff_craft_t5', 'spec_quarterstaff_craft_t6', 'spec_quarterstaff_craft_t7', 'spec_quarterstaff_craft_t8']
+)
+
+export const QUARTERSTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_quarterstaff_craft_t4', 'Adept Quarterstaff Crafter', 'mastery_quarterstaff_crafter', 'T4_2H_QUARTERSTAFF', 'simple'),
+  createSpec('spec_quarterstaff_craft_t5', 'Expert Quarterstaff Crafter', 'mastery_quarterstaff_crafter', 'T5_2H_QUARTERSTAFF', 'simple'),
+  createSpec('spec_quarterstaff_craft_t6', 'Master Quarterstaff Crafter', 'mastery_quarterstaff_crafter', 'T6_2H_QUARTERSTAFF', 'simple'),
+  createSpec('spec_quarterstaff_craft_t7', 'Grandmaster Quarterstaff Crafter', 'mastery_quarterstaff_crafter', 'T7_2H_QUARTERSTAFF', 'simple'),
+  createSpec('spec_quarterstaff_craft_t8', 'Elder Quarterstaff Crafter', 'mastery_quarterstaff_crafter', 'T8_2H_QUARTERSTAFF', 'simple'),
+]
+
+export const FIRESTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_firestaff_crafter',
+  'Fire Staff Crafter',
+  'crafting',
+  ['spec_firestaff_craft_t4', 'spec_firestaff_craft_t5', 'spec_firestaff_craft_t6', 'spec_firestaff_craft_t7', 'spec_firestaff_craft_t8']
+)
+
+export const FIRESTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_firestaff_craft_t4', 'Adept Fire Staff Crafter', 'mastery_firestaff_crafter', 'T4_MAIN_FIRESTAFF', 'simple'),
+  createSpec('spec_firestaff_craft_t5', 'Expert Fire Staff Crafter', 'mastery_firestaff_crafter', 'T5_MAIN_FIRESTAFF', 'simple'),
+  createSpec('spec_firestaff_craft_t6', 'Master Fire Staff Crafter', 'mastery_firestaff_crafter', 'T6_MAIN_FIRESTAFF', 'simple'),
+  createSpec('spec_firestaff_craft_t7', 'Grandmaster Fire Staff Crafter', 'mastery_firestaff_crafter', 'T7_MAIN_FIRESTAFF', 'simple'),
+  createSpec('spec_firestaff_craft_t8', 'Elder Fire Staff Crafter', 'mastery_firestaff_crafter', 'T8_MAIN_FIRESTAFF', 'simple'),
+]
+
+export const HOLYSTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_holystaff_crafter',
+  'Holy Staff Crafter',
+  'crafting',
+  ['spec_holystaff_craft_t4', 'spec_holystaff_craft_t5', 'spec_holystaff_craft_t6', 'spec_holystaff_craft_t7', 'spec_holystaff_craft_t8']
+)
+
+export const HOLYSTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_holystaff_craft_t4', 'Adept Holy Staff Crafter', 'mastery_holystaff_crafter', 'T4_MAIN_HOLYSTAFF', 'simple'),
+  createSpec('spec_holystaff_craft_t5', 'Expert Holy Staff Crafter', 'mastery_holystaff_crafter', 'T5_MAIN_HOLYSTAFF', 'simple'),
+  createSpec('spec_holystaff_craft_t6', 'Master Holy Staff Crafter', 'mastery_holystaff_crafter', 'T6_MAIN_HOLYSTAFF', 'simple'),
+  createSpec('spec_holystaff_craft_t7', 'Grandmaster Holy Staff Crafter', 'mastery_holystaff_crafter', 'T7_MAIN_HOLYSTAFF', 'simple'),
+  createSpec('spec_holystaff_craft_t8', 'Elder Holy Staff Crafter', 'mastery_holystaff_crafter', 'T8_MAIN_HOLYSTAFF', 'simple'),
+]
+
+export const ARCANESTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_arcanestaff_crafter',
+  'Arcane Staff Crafter',
+  'crafting',
+  ['spec_arcanestaff_craft_t4', 'spec_arcanestaff_craft_t5', 'spec_arcanestaff_craft_t6', 'spec_arcanestaff_craft_t7', 'spec_arcanestaff_craft_t8']
+)
+
+export const ARCANESTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_arcanestaff_craft_t4', 'Adept Arcane Staff Crafter', 'mastery_arcanestaff_crafter', 'T4_MAIN_ARCANESTAFF', 'simple'),
+  createSpec('spec_arcanestaff_craft_t5', 'Expert Arcane Staff Crafter', 'mastery_arcanestaff_crafter', 'T5_MAIN_ARCANESTAFF', 'simple'),
+  createSpec('spec_arcanestaff_craft_t6', 'Master Arcane Staff Crafter', 'mastery_arcanestaff_crafter', 'T6_MAIN_ARCANESTAFF', 'simple'),
+  createSpec('spec_arcanestaff_craft_t7', 'Grandmaster Arcane Staff Crafter', 'mastery_arcanestaff_crafter', 'T7_MAIN_ARCANESTAFF', 'simple'),
+  createSpec('spec_arcanestaff_craft_t8', 'Elder Arcane Staff Crafter', 'mastery_arcanestaff_crafter', 'T8_MAIN_ARCANESTAFF', 'simple'),
+]
+
+export const FROSTSTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_froststaff_crafter',
+  'Frost Staff Crafter',
+  'crafting',
+  ['spec_froststaff_craft_t4', 'spec_froststaff_craft_t5', 'spec_froststaff_craft_t6', 'spec_froststaff_craft_t7', 'spec_froststaff_craft_t8']
+)
+
+export const FROSTSTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_froststaff_craft_t4', 'Adept Frost Staff Crafter', 'mastery_froststaff_crafter', 'T4_MAIN_FROSTSTAFF', 'simple'),
+  createSpec('spec_froststaff_craft_t5', 'Expert Frost Staff Crafter', 'mastery_froststaff_crafter', 'T5_MAIN_FROSTSTAFF', 'simple'),
+  createSpec('spec_froststaff_craft_t6', 'Master Frost Staff Crafter', 'mastery_froststaff_crafter', 'T6_MAIN_FROSTSTAFF', 'simple'),
+  createSpec('spec_froststaff_craft_t7', 'Grandmaster Frost Staff Crafter', 'mastery_froststaff_crafter', 'T7_MAIN_FROSTSTAFF', 'simple'),
+  createSpec('spec_froststaff_craft_t8', 'Elder Frost Staff Crafter', 'mastery_froststaff_crafter', 'T8_MAIN_FROSTSTAFF', 'simple'),
+]
+
+export const CURSEDSTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_cursedstaff_crafter',
+  'Cursed Staff Crafter',
+  'crafting',
+  ['spec_cursedstaff_craft_t4', 'spec_cursedstaff_craft_t5', 'spec_cursedstaff_craft_t6', 'spec_cursedstaff_craft_t7', 'spec_cursedstaff_craft_t8']
+)
+
+export const CURSEDSTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_cursedstaff_craft_t4', 'Adept Cursed Staff Crafter', 'mastery_cursedstaff_crafter', 'T4_MAIN_CURSEDSTAFF', 'simple'),
+  createSpec('spec_cursedstaff_craft_t5', 'Expert Cursed Staff Crafter', 'mastery_cursedstaff_crafter', 'T5_MAIN_CURSEDSTAFF', 'simple'),
+  createSpec('spec_cursedstaff_craft_t6', 'Master Cursed Staff Crafter', 'mastery_cursedstaff_crafter', 'T6_MAIN_CURSEDSTAFF', 'simple'),
+  createSpec('spec_cursedstaff_craft_t7', 'Grandmaster Cursed Staff Crafter', 'mastery_cursedstaff_crafter', 'T7_MAIN_CURSEDSTAFF', 'simple'),
+  createSpec('spec_cursedstaff_craft_t8', 'Elder Cursed Staff Crafter', 'mastery_cursedstaff_crafter', 'T8_MAIN_CURSEDSTAFF', 'simple'),
+]
+
+export const NATURESTAFF_CRAFTER_MASTERY = createMastery(
+  'mastery_naturestaff_crafter',
+  'Nature Staff Crafter',
+  'crafting',
+  ['spec_naturestaff_craft_t4', 'spec_naturestaff_craft_t5', 'spec_naturestaff_craft_t6', 'spec_naturestaff_craft_t7', 'spec_naturestaff_craft_t8']
+)
+
+export const NATURESTAFF_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_naturestaff_craft_t4', 'Adept Nature Staff Crafter', 'mastery_naturestaff_crafter', 'T4_MAIN_NATURESTAFF', 'simple'),
+  createSpec('spec_naturestaff_craft_t5', 'Expert Nature Staff Crafter', 'mastery_naturestaff_crafter', 'T5_MAIN_NATURESTAFF', 'simple'),
+  createSpec('spec_naturestaff_craft_t6', 'Master Nature Staff Crafter', 'mastery_naturestaff_crafter', 'T6_MAIN_NATURESTAFF', 'simple'),
+  createSpec('spec_naturestaff_craft_t7', 'Grandmaster Nature Staff Crafter', 'mastery_naturestaff_crafter', 'T7_MAIN_NATURESTAFF', 'simple'),
+  createSpec('spec_naturestaff_craft_t8', 'Elder Nature Staff Crafter', 'mastery_naturestaff_crafter', 'T8_MAIN_NATURESTAFF', 'simple'),
+]
+
+// =============================================================================
+// CRAFTING - ARMOR
+// =============================================================================
+
+export const PLATE_ARMOR_CRAFTER_MASTERY = createMastery(
+  'mastery_plate_armor_crafter',
+  'Plate Armor Crafter',
+  'crafting',
+  ['spec_plate_craft_t4', 'spec_plate_craft_t5', 'spec_plate_craft_t6', 'spec_plate_craft_t7', 'spec_plate_craft_t8']
+)
+
+export const PLATE_ARMOR_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_plate_craft_t4', 'Adept Plate Armor Crafter', 'mastery_plate_armor_crafter', 'T4_ARMOR_PLATE_SET1', 'simple'),
+  createSpec('spec_plate_craft_t5', 'Expert Plate Armor Crafter', 'mastery_plate_armor_crafter', 'T5_ARMOR_PLATE_SET1', 'simple'),
+  createSpec('spec_plate_craft_t6', 'Master Plate Armor Crafter', 'mastery_plate_armor_crafter', 'T6_ARMOR_PLATE_SET1', 'simple'),
+  createSpec('spec_plate_craft_t7', 'Grandmaster Plate Armor Crafter', 'mastery_plate_armor_crafter', 'T7_ARMOR_PLATE_SET1', 'simple'),
+  createSpec('spec_plate_craft_t8', 'Elder Plate Armor Crafter', 'mastery_plate_armor_crafter', 'T8_ARMOR_PLATE_SET1', 'simple'),
+]
+
+export const LEATHER_ARMOR_CRAFTER_MASTERY = createMastery(
+  'mastery_leather_armor_crafter',
+  'Leather Armor Crafter',
+  'crafting',
+  ['spec_leather_craft_t4', 'spec_leather_craft_t5', 'spec_leather_craft_t6', 'spec_leather_craft_t7', 'spec_leather_craft_t8']
+)
+
+export const LEATHER_ARMOR_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_leather_craft_t4', 'Adept Leather Armor Crafter', 'mastery_leather_armor_crafter', 'T4_ARMOR_LEATHER_SET1', 'simple'),
+  createSpec('spec_leather_craft_t5', 'Expert Leather Armor Crafter', 'mastery_leather_armor_crafter', 'T5_ARMOR_LEATHER_SET1', 'simple'),
+  createSpec('spec_leather_craft_t6', 'Master Leather Armor Crafter', 'mastery_leather_armor_crafter', 'T6_ARMOR_LEATHER_SET1', 'simple'),
+  createSpec('spec_leather_craft_t7', 'Grandmaster Leather Armor Crafter', 'mastery_leather_armor_crafter', 'T7_ARMOR_LEATHER_SET1', 'simple'),
+  createSpec('spec_leather_craft_t8', 'Elder Leather Armor Crafter', 'mastery_leather_armor_crafter', 'T8_ARMOR_LEATHER_SET1', 'simple'),
+]
+
+export const CLOTH_ARMOR_CRAFTER_MASTERY = createMastery(
+  'mastery_cloth_armor_crafter',
+  'Cloth Armor Crafter',
+  'crafting',
+  ['spec_cloth_armor_craft_t4', 'spec_cloth_armor_craft_t5', 'spec_cloth_armor_craft_t6', 'spec_cloth_armor_craft_t7', 'spec_cloth_armor_craft_t8']
+)
+
+export const CLOTH_ARMOR_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_cloth_armor_craft_t4', 'Adept Cloth Armor Crafter', 'mastery_cloth_armor_crafter', 'T4_ARMOR_CLOTH_SET1', 'simple'),
+  createSpec('spec_cloth_armor_craft_t5', 'Expert Cloth Armor Crafter', 'mastery_cloth_armor_crafter', 'T5_ARMOR_CLOTH_SET1', 'simple'),
+  createSpec('spec_cloth_armor_craft_t6', 'Master Cloth Armor Crafter', 'mastery_cloth_armor_crafter', 'T6_ARMOR_CLOTH_SET1', 'simple'),
+  createSpec('spec_cloth_armor_craft_t7', 'Grandmaster Cloth Armor Crafter', 'mastery_cloth_armor_crafter', 'T7_ARMOR_CLOTH_SET1', 'simple'),
+  createSpec('spec_cloth_armor_craft_t8', 'Elder Cloth Armor Crafter', 'mastery_cloth_armor_crafter', 'T8_ARMOR_CLOTH_SET1', 'simple'),
+]
+
+// =============================================================================
+// CRAFTING - ACCESSORIES
+// =============================================================================
+
+export const OFFHAND_CRAFTER_MASTERY = createMastery(
+  'mastery_offhand_crafter',
+  'Off-hand Crafter',
+  'crafting',
+  ['spec_offhand_craft_t4', 'spec_offhand_craft_t5', 'spec_offhand_craft_t6', 'spec_offhand_craft_t7', 'spec_offhand_craft_t8']
+)
+
+export const OFFHAND_CRAFTER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_offhand_craft_t4', 'Adept Off-hand Crafter', 'mastery_offhand_crafter', 'T4_OFF_SHIELD', 'simple'),
+  createSpec('spec_offhand_craft_t5', 'Expert Off-hand Crafter', 'mastery_offhand_crafter', 'T5_OFF_SHIELD', 'simple'),
+  createSpec('spec_offhand_craft_t6', 'Master Off-hand Crafter', 'mastery_offhand_crafter', 'T6_OFF_SHIELD', 'simple'),
+  createSpec('spec_offhand_craft_t7', 'Grandmaster Off-hand Crafter', 'mastery_offhand_crafter', 'T7_OFF_SHIELD', 'simple'),
+  createSpec('spec_offhand_craft_t8', 'Elder Off-hand Crafter', 'mastery_offhand_crafter', 'T8_OFF_SHIELD', 'simple'),
+]
+
+// =============================================================================
+// CRAFTING - CONSUMABLES
+// =============================================================================
+
+export const COOK_MASTERY = createMastery(
+  'mastery_cook',
+  'Cook',
+  'crafting',
+  ['spec_food_t1', 'spec_food_t2', 'spec_food_t3', 'spec_food_t4', 'spec_food_t5', 'spec_food_t6', 'spec_food_t7', 'spec_food_t8']
+)
+
+export const COOK_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_food_t1', 'Trainee Cook', 'mastery_cook', 'T1_MEAL', 'simple'),
+  createSpec('spec_food_t2', 'Novice Cook', 'mastery_cook', 'T2_MEAL', 'simple'),
+  createSpec('spec_food_t3', 'Journeyman Cook', 'mastery_cook', 'T3_MEAL', 'simple'),
+  createSpec('spec_food_t4', 'Adept Cook', 'mastery_cook', 'T4_MEAL', 'simple'),
+  createSpec('spec_food_t5', 'Expert Cook', 'mastery_cook', 'T5_MEAL', 'simple'),
+  createSpec('spec_food_t6', 'Master Cook', 'mastery_cook', 'T6_MEAL', 'simple'),
+  createSpec('spec_food_t7', 'Grandmaster Cook', 'mastery_cook', 'T7_MEAL', 'simple'),
+  createSpec('spec_food_t8', 'Elder Cook', 'mastery_cook', 'T8_MEAL', 'simple'),
+]
+
+export const ALCHEMIST_MASTERY = createMastery(
+  'mastery_alchemist',
+  'Alchemist',
+  'crafting',
+  ['spec_potion_t1', 'spec_potion_t2', 'spec_potion_t3', 'spec_potion_t4', 'spec_potion_t5', 'spec_potion_t6', 'spec_potion_t7', 'spec_potion_t8']
+)
+
+export const ALCHEMIST_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_potion_t1', 'Trainee Alchemist', 'mastery_alchemist', 'T1_POTION', 'simple'),
+  createSpec('spec_potion_t2', 'Novice Alchemist', 'mastery_alchemist', 'T2_POTION', 'simple'),
+  createSpec('spec_potion_t3', 'Journeyman Alchemist', 'mastery_alchemist', 'T3_POTION', 'simple'),
+  createSpec('spec_potion_t4', 'Adept Alchemist', 'mastery_alchemist', 'T4_POTION', 'simple'),
+  createSpec('spec_potion_t5', 'Expert Alchemist', 'mastery_alchemist', 'T5_POTION', 'simple'),
+  createSpec('spec_potion_t6', 'Master Alchemist', 'mastery_alchemist', 'T6_POTION', 'simple'),
+  createSpec('spec_potion_t7', 'Grandmaster Alchemist', 'mastery_alchemist', 'T7_POTION', 'simple'),
+  createSpec('spec_potion_t8', 'Elder Alchemist', 'mastery_alchemist', 'T8_POTION', 'simple'),
+]
+
+// =============================================================================
+// FARMING
+// =============================================================================
+
+export const CROP_FARMER_MASTERY = createMastery(
+  'mastery_crop_farmer',
+  'Crop Farmer',
+  'farming',
+  ['spec_crop_t2', 'spec_crop_t3', 'spec_crop_t4', 'spec_crop_t5', 'spec_crop_t6', 'spec_crop_t7', 'spec_crop_t8']
+)
+
+export const CROP_FARMER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_crop_t2', 'Novice Crop Farmer', 'mastery_crop_farmer', 'T2_FARM_CARROT', 'simple'),
+  createSpec('spec_crop_t3', 'Journeyman Crop Farmer', 'mastery_crop_farmer', 'T3_FARM_BEAN', 'simple'),
+  createSpec('spec_crop_t4', 'Adept Crop Farmer', 'mastery_crop_farmer', 'T4_FARM_WHEAT', 'simple'),
+  createSpec('spec_crop_t5', 'Expert Crop Farmer', 'mastery_crop_farmer', 'T5_FARM_TURNIP', 'simple'),
+  createSpec('spec_crop_t6', 'Master Crop Farmer', 'mastery_crop_farmer', 'T6_FARM_CABBAGE', 'simple'),
+  createSpec('spec_crop_t7', 'Grandmaster Crop Farmer', 'mastery_crop_farmer', 'T7_FARM_POTATO', 'simple'),
+  createSpec('spec_crop_t8', 'Elder Crop Farmer', 'mastery_crop_farmer', 'T8_FARM_CORN', 'simple'),
+]
+
+export const ANIMAL_BREEDER_MASTERY = createMastery(
+  'mastery_animal_breeder',
+  'Animal Breeder',
+  'farming',
+  ['spec_animal_t3', 'spec_animal_t4', 'spec_animal_t5', 'spec_animal_t6', 'spec_animal_t7', 'spec_animal_t8']
+)
+
+export const ANIMAL_BREEDER_SPECIALIZATIONS: SpecializationNode[] = [
+  createSpec('spec_animal_t3', 'Journeyman Animal Breeder', 'mastery_animal_breeder', 'T3_FARM_CHICKEN', 'simple'),
+  createSpec('spec_animal_t4', 'Adept Animal Breeder', 'mastery_animal_breeder', 'T4_FARM_GOAT', 'simple'),
+  createSpec('spec_animal_t5', 'Expert Animal Breeder', 'mastery_animal_breeder', 'T5_FARM_GOOSE', 'simple'),
+  createSpec('spec_animal_t6', 'Master Animal Breeder', 'mastery_animal_breeder', 'T6_FARM_SHEEP', 'simple'),
+  createSpec('spec_animal_t7', 'Grandmaster Animal Breeder', 'mastery_animal_breeder', 'T7_FARM_PIG', 'simple'),
+  createSpec('spec_animal_t8', 'Elder Animal Breeder', 'mastery_animal_breeder', 'T8_FARM_COW', 'simple'),
+]
+
+// =============================================================================
 // MASTER ARRAYS
 // =============================================================================
 
@@ -604,6 +1191,48 @@ export const ALL_MASTERIES: MasteryNode[] = [
   SHIELD_MASTERY,
   TORCH_MASTERY,
   TOME_MASTERY,
+  // Gathering
+  FIBER_HARVESTER_MASTERY,
+  HIDE_SKINNER_MASTERY,
+  ORE_MINER_MASTERY,
+  ROCK_QUARRIER_MASTERY,
+  WOOD_LUMBERJACK_MASTERY,
+  FISHERMAN_MASTERY,
+  // Refining
+  WEAVER_MASTERY,
+  TANNER_MASTERY,
+  SMELTER_MASTERY,
+  STONEMASON_MASTERY,
+  WOODWORKER_MASTERY,
+  // Crafting - Weapons
+  TOOLMAKER_MASTERY,
+  AXE_CRAFTER_MASTERY,
+  SWORD_CRAFTER_MASTERY,
+  MACE_CRAFTER_MASTERY,
+  HAMMER_CRAFTER_MASTERY,
+  CROSSBOW_CRAFTER_MASTERY,
+  BOW_CRAFTER_MASTERY,
+  SPEAR_CRAFTER_MASTERY,
+  DAGGER_CRAFTER_MASTERY,
+  QUARTERSTAFF_CRAFTER_MASTERY,
+  FIRESTAFF_CRAFTER_MASTERY,
+  HOLYSTAFF_CRAFTER_MASTERY,
+  ARCANESTAFF_CRAFTER_MASTERY,
+  FROSTSTAFF_CRAFTER_MASTERY,
+  CURSEDSTAFF_CRAFTER_MASTERY,
+  NATURESTAFF_CRAFTER_MASTERY,
+  // Crafting - Armor
+  PLATE_ARMOR_CRAFTER_MASTERY,
+  LEATHER_ARMOR_CRAFTER_MASTERY,
+  CLOTH_ARMOR_CRAFTER_MASTERY,
+  // Crafting - Accessories
+  OFFHAND_CRAFTER_MASTERY,
+  // Crafting - Consumables
+  COOK_MASTERY,
+  ALCHEMIST_MASTERY,
+  // Farming
+  CROP_FARMER_MASTERY,
+  ANIMAL_BREEDER_MASTERY,
 ]
 
 export const ALL_SPECIALIZATIONS: SpecializationNode[] = [
@@ -642,6 +1271,48 @@ export const ALL_SPECIALIZATIONS: SpecializationNode[] = [
   ...SHIELD_SPECIALIZATIONS,
   ...TORCH_SPECIALIZATIONS,
   ...TOME_SPECIALIZATIONS,
+  // Gathering
+  ...FIBER_HARVESTER_SPECIALIZATIONS,
+  ...HIDE_SKINNER_SPECIALIZATIONS,
+  ...ORE_MINER_SPECIALIZATIONS,
+  ...ROCK_QUARRIER_SPECIALIZATIONS,
+  ...WOOD_LUMBERJACK_SPECIALIZATIONS,
+  ...FISHERMAN_SPECIALIZATIONS,
+  // Refining
+  ...WEAVER_SPECIALIZATIONS,
+  ...TANNER_SPECIALIZATIONS,
+  ...SMELTER_SPECIALIZATIONS,
+  ...STONEMASON_SPECIALIZATIONS,
+  ...WOODWORKER_SPECIALIZATIONS,
+  // Crafting - Weapons
+  ...TOOLMAKER_SPECIALIZATIONS,
+  ...AXE_CRAFTER_SPECIALIZATIONS,
+  ...SWORD_CRAFTER_SPECIALIZATIONS,
+  ...MACE_CRAFTER_SPECIALIZATIONS,
+  ...HAMMER_CRAFTER_SPECIALIZATIONS,
+  ...CROSSBOW_CRAFTER_SPECIALIZATIONS,
+  ...BOW_CRAFTER_SPECIALIZATIONS,
+  ...SPEAR_CRAFTER_SPECIALIZATIONS,
+  ...DAGGER_CRAFTER_SPECIALIZATIONS,
+  ...QUARTERSTAFF_CRAFTER_SPECIALIZATIONS,
+  ...FIRESTAFF_CRAFTER_SPECIALIZATIONS,
+  ...HOLYSTAFF_CRAFTER_SPECIALIZATIONS,
+  ...ARCANESTAFF_CRAFTER_SPECIALIZATIONS,
+  ...FROSTSTAFF_CRAFTER_SPECIALIZATIONS,
+  ...CURSEDSTAFF_CRAFTER_SPECIALIZATIONS,
+  ...NATURESTAFF_CRAFTER_SPECIALIZATIONS,
+  // Crafting - Armor
+  ...PLATE_ARMOR_CRAFTER_SPECIALIZATIONS,
+  ...LEATHER_ARMOR_CRAFTER_SPECIALIZATIONS,
+  ...CLOTH_ARMOR_CRAFTER_SPECIALIZATIONS,
+  // Crafting - Accessories
+  ...OFFHAND_CRAFTER_SPECIALIZATIONS,
+  // Crafting - Consumables
+  ...COOK_SPECIALIZATIONS,
+  ...ALCHEMIST_SPECIALIZATIONS,
+  // Farming
+  ...CROP_FARMER_SPECIALIZATIONS,
+  ...ANIMAL_BREEDER_SPECIALIZATIONS,
 ]
 
 // =============================================================================
