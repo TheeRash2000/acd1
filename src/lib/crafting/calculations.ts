@@ -7,12 +7,12 @@ import type {
   Journal,
 } from './types'
 import {
-  calculateGoldeniumRRR,
+  calculateRRR,
   calculateTotalBonus,
   ZONE_QUALITY_BONUS,
   HIDEOUT_POWER_BONUS,
   CRAFTING_BONUSES,
-} from '@/constants/goldenium'
+} from '@/constants/crafting-bonuses'
 
 export const ARTIFACT_PATTERNS = {
   avalonian: /_AVALON$/i,
@@ -231,9 +231,7 @@ export const calculateJournalProfit = (
 }
 
 /**
- * Calculate RRR using the Goldenium formula
- *
- * This is the canonical implementation matching Goldenium All-In-One V2.6.0
+ * Calculate RRR (Resource Return Rate)
  *
  * Formula: RRR = totalBonus / (1 + totalBonus)
  *
@@ -253,7 +251,7 @@ export const getGoldeniumRRR = (config: GoldeniumCraftingConfig): number => {
     isOnIsland: config.isOnIsland,
   })
 
-  return calculateGoldeniumRRR(totalBonus)
+  return calculateRRR(totalBonus)
 }
 
 /**
@@ -275,7 +273,7 @@ export const getGoldeniumBonusBreakdown = (config: GoldeniumCraftingConfig): {
   const islandPenalty = config.isOnIsland ? CRAFTING_BONUSES.ISLAND_PENALTY : 0
 
   const totalBonus = zoneQualityBonus + hideoutPowerBonus + cityBonus + focusBonus + islandPenalty
-  const rrr = calculateGoldeniumRRR(totalBonus)
+  const rrr = calculateRRR(totalBonus)
 
   return {
     zoneQualityBonus,
@@ -289,7 +287,7 @@ export const getGoldeniumBonusBreakdown = (config: GoldeniumCraftingConfig): {
 }
 
 /**
- * Get RRR using the new Goldenium-based calculation
+ * Get total RRR using the bonus-based calculation
  * This replaces the legacy getRRR and getHideoutRRR functions
  */
 export const getTotalRRRGoldenium = (

@@ -69,8 +69,8 @@ export interface SavedHideout extends HideoutConfig {
 }
 
 /**
- * Goldenium Crafting Configuration
- * Used for calculating RRR using the Goldenium formula
+ * Crafting Bonus Configuration
+ * Used for calculating RRR (Resource Return Rate)
  */
 export interface GoldeniumCraftingConfig {
   zoneQuality: number      // 1-6

@@ -12,10 +12,10 @@ import {
 import {
   calculateFocusCost,
   calculateTotalFCE,
-  calculateGoldeniumRRR,
+  calculateRRR,
   FCE_CONSTANTS,
   CRAFTING_BONUSES,
-} from '@/constants/goldenium'
+} from '@/constants/crafting-bonuses'
 
 // Material types with verified data from spreadsheet
 const MATERIAL_TYPES: {
