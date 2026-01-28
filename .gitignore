@@ -36,3 +36,4 @@ yarn-error.log*
 /public/data/progression-tables.json
 /data/ao-bin-dumps/
 /src/lib/generated/itemsIndex.json
+tsconfig.tsbuildinfo

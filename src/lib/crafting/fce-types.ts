@@ -1,6 +1,6 @@
 /**
  * FCE (Focus Cost Efficiency) Data Types
- * Based on Goldenium All-In-One V2.6.0 spreadsheet
+ * Source: Albion Online crafting spreadsheet
  */
 
 export interface ItemFCEData {
@@ -31,14 +31,14 @@ export type RefiningMaterialType = 'ore' | 'wood' | 'hide' | 'fiber' | 'stone'
 export interface GearSubcategory {
   id: string
   name: string
-  craftingCategory: 1 | 2 | 3 | 4  // Goldenium category: 1=Mage, 2=Hunter, 3=Warrior, 4=Tools
+  craftingCategory: 1 | 2 | 3 | 4  // Category: 1=Mage, 2=Hunter, 3=Warrior, 4=Tools
   baseFocus: number
   specUniqueFCE: number
   specMutualFCE: number
   bonusCity?: string
 }
 
-// Gear subcategory FCE data from Goldenium
+// Gear subcategory FCE data
 export const GEAR_SUBCATEGORY_FCE: Record<string, GearSubcategory> = {
   // Category 1 - Mage (Cloth armor, staves)
   'cloth': {
@@ -307,52 +307,68 @@ export const POTION_FCE: Record<string, { baseFocus: number; specUniqueFCE: numb
   'poison': { baseFocus: 56, specUniqueFCE: 30, specMutualFCE: 30 },
 }
 
-// Refining FCE data by tier
-export const REFINING_FCE: Record<RefiningMaterialType, { baseFocus: Record<number, number>; specUniqueFCE: number; specMutualFCE: number }> = {
-  'ore': {
-    baseFocus: {
-      4: 56, 5: 112, 6: 224, 7: 448, 8: 896,
-    },
-    specUniqueFCE: 250,
-    specMutualFCE: 30,
-  },
-  'wood': {
-    baseFocus: {
-      4: 56, 5: 112, 6: 224, 7: 448, 8: 896,
-    },
-    specUniqueFCE: 250,
-    specMutualFCE: 30,
-  },
-  'hide': {
-    baseFocus: {
-      4: 56, 5: 112, 6: 224, 7: 448, 8: 896,
-    },
-    specUniqueFCE: 250,
-    specMutualFCE: 30,
-  },
-  'fiber': {
-    baseFocus: {
-      4: 56, 5: 112, 6: 224, 7: 448, 8: 896,
-    },
-    specUniqueFCE: 250,
-    specMutualFCE: 30,
-  },
-  'stone': {
-    baseFocus: {
-      4: 56, 5: 112, 6: 224, 7: 448, 8: 896,
-    },
-    specUniqueFCE: 250,
-    specMutualFCE: 30,
-  },
+// Refining bonus cities - verified from spreadsheet
+export const REFINING_BONUS_CITIES: Record<RefiningMaterialType, string> = {
+  'ore': 'Thetford',      // Ore → Metal Bars
+  'fiber': 'Lymhurst',    // Fiber → Cloth
+  'hide': 'Martlock',     // Hide → Leather
+  'wood': 'Fort Sterling', // Wood → Planks
+  'stone': 'Bridgewatch',  // Stone → Stone Blocks
 }
 
-// Enchantment multiplier for refining base focus
-export const REFINING_ENCHANT_MULTIPLIER: Record<number, number> = {
-  0: 1.0,
-  1: 1.5,
-  2: 2.5,
-  3: 5.0,
-  4: 10.0,
+// Refining output names
+export const REFINING_OUTPUT_NAMES: Record<RefiningMaterialType, string> = {
+  'ore': 'Metal Bars',
+  'fiber': 'Cloth',
+  'hide': 'Leather',
+  'wood': 'Planks',
+  'stone': 'Stone Blocks',
+}
+
+/**
+ * Base Focus Costs for Refining - EXACT values from spreadsheet
+ * Indexed by "tier.enchantment" (e.g., "4.0", "4.1", etc.)
+ * These are the same for ALL material types
+ */
+export const REFINING_BASE_FOCUS: Record<string, number> = {
+  // Tier 3
+  '3.0': 31,
+  // Tier 4
+  '4.0': 54,
+  '4.1': 94,
+  '4.2': 164,
+  '4.3': 287,
+  '4.4': 503,
+  // Tier 5
+  '5.0': 94,
+  '5.1': 164,
+  '5.2': 287,
+  '5.3': 503,
+  '5.4': 880,
+  // Tier 6
+  '6.0': 164,
+  '6.1': 287,
+  '6.2': 503,
+  '6.3': 880,
+  '6.4': 1539,
+  // Tier 7
+  '7.0': 287,
+  '7.1': 503,
+  '7.2': 880,
+  '7.3': 1539,
+  '7.4': 2694,
+  // Tier 8
+  '8.0': 503,
+  '8.1': 880,
+  '8.2': 1539,
+  '8.3': 2694,
+  '8.4': 4714,
+}
+
+// Refining FCE values (same for all material types)
+export const REFINING_FCE_VALUES = {
+  specUniqueFCE: 250,  // FCE per spec level (unique to this material)
+  specMutualFCE: 30,   // FCE per spec level (shared across materials)
 }
 
 /**
@@ -393,24 +409,39 @@ export function getGearFCEData(
 }
 
 /**
- * Get FCE data for refining
+ * Get FCE data for refining using exact values from spreadsheet
  */
 export function getRefiningFCEData(
   materialType: RefiningMaterialType,
   tier: number,
   enchantment: number = 0
-): { baseFocus: number; specUniqueFCE: number; specMutualFCE: number } | undefined {
-  const data = REFINING_FCE[materialType]
-  if (!data) return undefined
+): { baseFocus: number; specUniqueFCE: number; specMutualFCE: number; bonusCity: string } | undefined {
+  // Look up exact base focus from spreadsheet data
+  const key = `${tier}.${enchantment}`
+  const baseFocus = REFINING_BASE_FOCUS[key]
 
-  const baseFocus = data.baseFocus[tier]
   if (baseFocus === undefined) return undefined
 
-  const enchantMultiplier = REFINING_ENCHANT_MULTIPLIER[enchantment] ?? 1.0
+  const bonusCity = REFINING_BONUS_CITIES[materialType]
 
   return {
-    baseFocus: baseFocus * enchantMultiplier,
-    specUniqueFCE: data.specUniqueFCE,
-    specMutualFCE: data.specMutualFCE,
+    baseFocus,
+    specUniqueFCE: REFINING_FCE_VALUES.specUniqueFCE,
+    specMutualFCE: REFINING_FCE_VALUES.specMutualFCE,
+    bonusCity,
   }
+}
+
+/**
+ * Get bonus city for a material type
+ */
+export function getRefiningBonusCity(materialType: RefiningMaterialType): string {
+  return REFINING_BONUS_CITIES[materialType]
+}
+
+/**
+ * Get output name for a material type
+ */
+export function getRefiningOutputName(materialType: RefiningMaterialType): string {
+  return REFINING_OUTPUT_NAMES[materialType]
 }
