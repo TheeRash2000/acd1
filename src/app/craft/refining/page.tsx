@@ -13,7 +13,7 @@ import {
   calculateTotalFCE,
   calculateRRR,
   FCE_CONSTANTS,
-  CRAFTING_BONUSES,
+  PRODUCTION_BONUSES,
 } from '@/constants/crafting-bonuses'
 
 // Material types with verified data from spreadsheet
@@ -199,25 +199,49 @@ export default function RefiningPage() {
 
   const materialData = MATERIAL_TYPES.find((m) => m.id === materialType)
 
+  // Royal cities (have base 18% bonus)
+  const ROYAL_CITIES = ['Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford']
+
   // Auto-calculate RRR based on city and material
-  const calculatedRRR = useMemo(() => {
-    if (!materialData) return 0
+  // Using wiki formula: RRR = 1 - 1/(1 + ProductionBonus/100) = bonus / (1 + bonus)
+  const { calculatedRRR, bonusBreakdown } = useMemo(() => {
+    if (!materialData) return { calculatedRRR: 0, bonusBreakdown: { base: 0, specialty: 0, focus: 0, total: 0 } }
 
     let totalBonus = 0
+    const breakdown = { base: 0, specialty: 0, focus: 0, total: 0 }
 
-    // City bonus: +15% if crafting in the material's bonus city
+    // Check if in a royal city
+    const isRoyalCity = ROYAL_CITIES.includes(craftCity)
     const isInBonusCity = craftCity === materialData.bonusCity
-    if (isInBonusCity) {
-      totalBonus += CRAFTING_BONUSES.CITY_BONUS // 0.15
+
+    if (isRoyalCity) {
+      // Royal City Base: 18%
+      breakdown.base = PRODUCTION_BONUSES.ROYAL_CITY_BASE // 0.18
+      totalBonus += breakdown.base
+
+      // Refining Specialty Bonus: +40% in specialty city (total 58%)
+      if (isInBonusCity) {
+        breakdown.specialty = PRODUCTION_BONUSES.REFINING_SPECIALTY // 0.40
+        totalBonus += breakdown.specialty
+      }
+    }
+    // Caerleon and Brecilien have no refining specialty bonuses
+    // but still have base 18% according to wiki "Baseline royal cities"
+    else if (craftCity === 'Caerleon' || craftCity === 'Brecilien') {
+      breakdown.base = PRODUCTION_BONUSES.ROYAL_CITY_BASE // 0.18
+      totalBonus += breakdown.base
     }
 
     // Focus bonus: +59% if using focus
     if (useFocus) {
-      totalBonus += CRAFTING_BONUSES.FOCUS_BONUS // 0.59
+      breakdown.focus = PRODUCTION_BONUSES.FOCUS_BONUS // 0.59
+      totalBonus += breakdown.focus
     }
 
+    breakdown.total = totalBonus
+
     // Calculate RRR using formula: RRR = totalBonus / (1 + totalBonus)
-    return calculateRRR(totalBonus)
+    return { calculatedRRR: calculateRRR(totalBonus), bonusBreakdown: breakdown }
   }, [craftCity, materialData, useFocus])
 
   // Display RRR as percentage
@@ -699,7 +723,7 @@ export default function RefiningPage() {
           <label className="text-xs text-muted-light dark:text-muted">
             Craft City
             {materialData && craftCity === materialData.bonusCity && (
-              <span className="ml-1 text-green-400">+15%</span>
+              <span className="ml-1 text-green-400">+40% Specialty</span>
             )}
           </label>
           <select
@@ -713,7 +737,7 @@ export default function RefiningPage() {
           >
             {CITIES.map((city) => (
               <option key={city} value={city}>
-                {city} {materialData && city === materialData.bonusCity ? '(Bonus)' : ''}
+                {city} {materialData && city === materialData.bonusCity ? '(+40%)' : ''}
               </option>
             ))}
           </select>
@@ -837,15 +861,29 @@ export default function RefiningPage() {
             <span className="text-muted-light dark:text-muted">Return Rate: </span>
             <span className="font-bold text-green-400">{returnRatePercent.toFixed(2)}%</span>
           </div>
-          <div className="text-xs text-muted-light dark:text-muted">
-            {craftCity === materialData?.bonusCity && (
-              <span className="mr-2 text-green-400">+15% City Bonus</span>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {bonusBreakdown.base > 0 && (
+              <span className="rounded bg-gray-500/20 px-1.5 py-0.5 text-gray-300">
+                +{(bonusBreakdown.base * 100).toFixed(0)}% Base
+              </span>
             )}
-            {useFocus && (
-              <span className="text-blue-400">+59% Focus Bonus</span>
+            {bonusBreakdown.specialty > 0 && (
+              <span className="rounded bg-green-500/20 px-1.5 py-0.5 text-green-400">
+                +{(bonusBreakdown.specialty * 100).toFixed(0)}% Specialty
+              </span>
             )}
-            {craftCity !== materialData?.bonusCity && !useFocus && (
-              <span>No bonuses active</span>
+            {bonusBreakdown.focus > 0 && (
+              <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-blue-400">
+                +{(bonusBreakdown.focus * 100).toFixed(0)}% Focus
+              </span>
+            )}
+            {bonusBreakdown.total > 0 && (
+              <span className="text-muted-light dark:text-muted">
+                = {(bonusBreakdown.total * 100).toFixed(0)}% Production Bonus
+              </span>
+            )}
+            {bonusBreakdown.total === 0 && (
+              <span className="text-muted-light dark:text-muted">No bonuses active</span>
             )}
           </div>
           {lastUpdated && (
@@ -1078,13 +1116,22 @@ export default function RefiningPage() {
       {/* Info Box */}
       <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-sm">
         <div className="text-amber-300">
-          <strong>How RRR is calculated:</strong>
+          <strong>Production Bonuses (from wiki):</strong>
         </div>
         <ul className="mt-1 list-inside list-disc text-xs text-muted-light dark:text-muted">
-          <li>City Bonus: +15% when crafting in {materialData?.bonusCity} (bonus city for {materialData?.name})</li>
-          <li>Focus Bonus: +59% when using focus</li>
-          <li>Formula: RRR = totalBonus / (1 + totalBonus)</li>
-          <li className="mt-1 text-amber-300/70">Note: No hideout bonuses apply to refining</li>
+          <li>Royal City Base: <span className="text-gray-300">+18%</span></li>
+          <li>Refining Specialty ({materialData?.bonusCity} for {materialData?.name}): <span className="text-green-400">+40%</span> (total 58%)</li>
+          <li>Using Focus: <span className="text-blue-400">+59%</span> production bonus</li>
+          <li className="mt-1">Formula: <code className="rounded bg-bg/50 px-1">RRR = bonus / (1 + bonus)</code></li>
+          <li className="mt-1 text-amber-300/70">Example: 58% → 36.7% RRR | 117% (with focus) → 53.9% RRR</li>
+        </ul>
+        <div className="mt-2 text-amber-300">
+          <strong>Focus Cost:</strong>
+        </div>
+        <ul className="mt-1 list-inside list-disc text-xs text-muted-light dark:text-muted">
+          <li>Focus cost is halved for every 10,000 FCE (Focus Cost Efficiency)</li>
+          <li>Mastery levels increase your FCE, reducing focus cost</li>
+          <li>Max 40,000 FCE for T4-T8 refining = 6.25% of base cost</li>
         </ul>
       </div>
     </section>
