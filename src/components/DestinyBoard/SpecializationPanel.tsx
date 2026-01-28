@@ -1,6 +1,6 @@
 'use client';
 
-import { getMastery, getSpecializationsForMastery } from '@/data/masteries';
+import { getMastery, getSpecializationsForMastery } from '@/lib/destiny-board/masteries';
 import { useDestinyBoardStore } from '@/stores/destinyBoardStore';
 import { Minus, Plus, CheckCircle2 } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { ALL_MASTERIES } from '@/data/masteries';
+import { ALL_MASTERIES } from '@/lib/destiny-board/masteries';
 import { useDestinyBoardStore } from '@/stores/destinyBoardStore';
 import { CheckCircle2 } from 'lucide-react';
 
