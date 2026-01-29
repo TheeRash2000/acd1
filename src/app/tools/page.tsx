@@ -33,6 +33,18 @@ const TOOLS = [
     href: '/tools/queue',
     icon: '📝',
   },
+  {
+    name: 'Black Market Flipper',
+    description: 'Find profitable items to craft and sell to the Black Market.',
+    href: '/tools/blackmarket',
+    icon: '🏴',
+  },
+  {
+    name: 'Island Management',
+    description: 'Manage islands, workers, and track farming operations with input/output calculations.',
+    href: '/tools/islands',
+    icon: '🏝️',
+  },
 ]
 
 const CALCULATORS = [
