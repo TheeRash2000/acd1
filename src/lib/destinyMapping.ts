@@ -1,4 +1,4 @@
-import { DESTINY_BOARD_NODES } from '@/data/destinyNodes'
+import { DESTINY_BOARD_NODES } from '@/lib/destiny-board/destinyNodes'
 
 type NodeTree = Record<string, any>
 

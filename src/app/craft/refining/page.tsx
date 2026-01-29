@@ -15,8 +15,10 @@ import {
   FCE_CONSTANTS,
   PRODUCTION_BONUSES,
 } from '@/constants/crafting-bonuses'
+import { useDestinyBoardStore } from '@/stores/destinyBoardStore'
 
 // Material types with verified data from spreadsheet
+// Includes destiny board mastery/spec IDs for integration
 const MATERIAL_TYPES: {
   id: RefiningMaterialType
   name: string
@@ -25,20 +27,21 @@ const MATERIAL_TYPES: {
   bonusCity: string
   rawItemPrefix: string
   refinedItemPrefix: string
+  masteryId: string
+  specPrefix: string
 }[] = [
-  { id: 'hide', name: 'Leather', rawName: 'Hide', outputName: 'Leather', bonusCity: 'Martlock', rawItemPrefix: 'HIDE', refinedItemPrefix: 'LEATHER' },
-  { id: 'fiber', name: 'Cloth', rawName: 'Fiber', outputName: 'Cloth', bonusCity: 'Lymhurst', rawItemPrefix: 'FIBER', refinedItemPrefix: 'CLOTH' },
-  { id: 'ore', name: 'Metal', rawName: 'Ore', outputName: 'Metal Bar', bonusCity: 'Thetford', rawItemPrefix: 'ORE', refinedItemPrefix: 'METALBAR' },
-  { id: 'wood', name: 'Planks', rawName: 'Wood', outputName: 'Planks', bonusCity: 'Fort Sterling', rawItemPrefix: 'WOOD', refinedItemPrefix: 'PLANKS' },
-  { id: 'stone', name: 'Stone Block', rawName: 'Stone', outputName: 'Stone Block', bonusCity: 'Bridgewatch', rawItemPrefix: 'ROCK', refinedItemPrefix: 'STONEBLOCK' },
+  { id: 'hide', name: 'Leather', rawName: 'Hide', outputName: 'Leather', bonusCity: 'Martlock', rawItemPrefix: 'HIDE', refinedItemPrefix: 'LEATHER', masteryId: 'mastery_tanner', specPrefix: 'spec_leather_t' },
+  { id: 'fiber', name: 'Cloth', rawName: 'Fiber', outputName: 'Cloth', bonusCity: 'Lymhurst', rawItemPrefix: 'FIBER', refinedItemPrefix: 'CLOTH', masteryId: 'mastery_weaver', specPrefix: 'spec_cloth_t' },
+  { id: 'ore', name: 'Metal', rawName: 'Ore', outputName: 'Metal Bar', bonusCity: 'Thetford', rawItemPrefix: 'ORE', refinedItemPrefix: 'METALBAR', masteryId: 'mastery_smelter', specPrefix: 'spec_metalbar_t' },
+  { id: 'wood', name: 'Planks', rawName: 'Wood', outputName: 'Planks', bonusCity: 'Fort Sterling', rawItemPrefix: 'WOOD', refinedItemPrefix: 'PLANKS', masteryId: 'mastery_woodworker', specPrefix: 'spec_planks_t' },
+  { id: 'stone', name: 'Stone Block', rawName: 'Stone', outputName: 'Stone Block', bonusCity: 'Bridgewatch', rawItemPrefix: 'ROCK', refinedItemPrefix: 'STONEBLOCK', masteryId: 'mastery_stonemason', specPrefix: 'spec_stoneblock_t' },
 ]
 
 // Server to API endpoint mapping
 const SERVER_API_ENDPOINTS: Record<string, string> = {
-  'West': 'https://west.albion-online-data.com',
-  'East': 'https://east.albion-online-data.com',
+  'Americas': 'https://west.albion-online-data.com',
   'Europe': 'https://europe.albion-online-data.com',
-  'Asia': 'https://asia.albion-online-data.com',
+  'Asia': 'https://east.albion-online-data.com',
 }
 
 // City to API location mapping
@@ -62,7 +65,7 @@ const CITIES = [
   'Brecilien',
 ]
 
-const SERVERS = ['West', 'East', 'Europe', 'Asia']
+const SERVERS = ['Americas', 'Europe', 'Asia']
 
 const MARKET_TAX_OPTIONS = [
   { label: 'No Tax', value: 0 },
@@ -160,6 +163,10 @@ function getValueColor(value: number, min: number, max: number, invert = false):
 }
 
 export default function RefiningPage() {
+  // Destiny Board integration
+  const { activeCharacter } = useDestinyBoardStore()
+  const [useDestinyBoard, setUseDestinyBoard] = useState(true)
+
   // Settings state
   const [materialType, setMaterialType] = useState<RefiningMaterialType>('hide')
   const [amount, setAmount] = useState(1)
@@ -169,17 +176,36 @@ export default function RefiningPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  // Mastery levels per tier
-  const [masteryT4, setMasteryT4] = useState(0)
-  const [masteryT5, setMasteryT5] = useState(0)
-  const [masteryT6, setMasteryT6] = useState(0)
-  const [masteryT7, setMasteryT7] = useState(0)
-  const [masteryT8, setMasteryT8] = useState(0)
+  // Manual mastery levels (used when not using destiny board)
+  const [manualMasteryT4, setManualMasteryT4] = useState(0)
+  const [manualMasteryT5, setManualMasteryT5] = useState(0)
+  const [manualMasteryT6, setManualMasteryT6] = useState(0)
+  const [manualMasteryT7, setManualMasteryT7] = useState(0)
+  const [manualMasteryT8, setManualMasteryT8] = useState(0)
+
+  // Get mastery level from destiny board or manual input
+  const materialData = MATERIAL_TYPES.find((m) => m.id === materialType)
+
+  const getMasteryForTierFromDB = useCallback((tier: number): number => {
+    if (!useDestinyBoard || !activeCharacter || !materialData) {
+      return 0
+    }
+    // Get the specialization level for this tier (spec levels act as mastery for FCE)
+    const specId = `${materialData.specPrefix}${tier}`
+    return activeCharacter.specializations[specId] || 0
+  }, [useDestinyBoard, activeCharacter, materialData])
+
+  // Effective mastery levels (from DB or manual)
+  const masteryT4 = useDestinyBoard && activeCharacter ? getMasteryForTierFromDB(4) : manualMasteryT4
+  const masteryT5 = useDestinyBoard && activeCharacter ? getMasteryForTierFromDB(5) : manualMasteryT5
+  const masteryT6 = useDestinyBoard && activeCharacter ? getMasteryForTierFromDB(6) : manualMasteryT6
+  const masteryT7 = useDestinyBoard && activeCharacter ? getMasteryForTierFromDB(7) : manualMasteryT7
+  const masteryT8 = useDestinyBoard && activeCharacter ? getMasteryForTierFromDB(8) : manualMasteryT8
 
   // Cities
   const [craftCity, setCraftCity] = useState('Martlock')
   const [sellCity, setSellCity] = useState('Martlock')
-  const [server, setServer] = useState('West')
+  const [server, setServer] = useState('Americas')
 
   // Prices - keyed by "tier.enchant"
   const [rawPrices, setRawPrices] = useState<Record<string, number>>({})
@@ -196,8 +222,6 @@ export default function RefiningPage() {
   const [filterEnchantMax, setFilterEnchantMax] = useState(4)
   const [filterProfitableOnly, setFilterProfitableOnly] = useState(false)
   const [filterHasPrices, setFilterHasPrices] = useState(false)
-
-  const materialData = MATERIAL_TYPES.find((m) => m.id === materialType)
 
   // Royal cities (have base 18% bonus)
   const ROYAL_CITIES = ['Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford']
@@ -468,7 +492,7 @@ export default function RefiningPage() {
       const itemList = allItems.join(',')
 
       // Get API endpoint based on server selection
-      const apiEndpoint = SERVER_API_ENDPOINTS[server] || SERVER_API_ENDPOINTS['West']
+      const apiEndpoint = SERVER_API_ENDPOINTS[server] || SERVER_API_ENDPOINTS['Americas']
 
       // Fetch from API - use craftCity for raw materials, sellCity for refined
       const buyLocation = CITY_API_LOCATIONS[craftCity] || craftCity
@@ -663,61 +687,113 @@ export default function RefiningPage() {
       </div>
 
       {/* Controls Row 2 - Masteries */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-        <div className="grid gap-1">
-          <label className="text-xs text-muted-light dark:text-muted">Mastery T4</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={masteryT4}
-            onChange={(e) => setMasteryT4(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
-          />
+      <div className="rounded-lg border border-border-light bg-surface-light/50 p-3 dark:border-border dark:bg-surface/50">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={useDestinyBoard}
+                onChange={(e) => setUseDestinyBoard(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span className={useDestinyBoard ? 'text-blue-400' : 'text-muted-light dark:text-muted'}>
+                Use Destiny Board
+              </span>
+            </label>
+            {useDestinyBoard && activeCharacter && (
+              <span className="text-xs text-blue-400">
+                ({activeCharacter.name})
+              </span>
+            )}
+            {useDestinyBoard && !activeCharacter && (
+              <span className="text-xs text-amber-400">
+                No character selected - <Link href="/destiny-board" className="underline">create one</Link>
+              </span>
+            )}
+          </div>
         </div>
-        <div className="grid gap-1">
-          <label className="text-xs text-muted-light dark:text-muted">Mastery T5</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={masteryT5}
-            onChange={(e) => setMasteryT5(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
-          />
-        </div>
-        <div className="grid gap-1">
-          <label className="text-xs text-muted-light dark:text-muted">Mastery T6</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={masteryT6}
-            onChange={(e) => setMasteryT6(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
-          />
-        </div>
-        <div className="grid gap-1">
-          <label className="text-xs text-muted-light dark:text-muted">Mastery T7</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={masteryT7}
-            onChange={(e) => setMasteryT7(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
-          />
-        </div>
-        <div className="grid gap-1">
-          <label className="text-xs text-muted-light dark:text-muted">Mastery T8</label>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={masteryT8}
-            onChange={(e) => setMasteryT8(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-            className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
-          />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+          <div className="grid gap-1">
+            <label className="text-xs text-muted-light dark:text-muted">Spec T4</label>
+            <input
+              type="number"
+              min="0"
+              max="120"
+              value={masteryT4}
+              onChange={(e) => setManualMasteryT4(Math.min(120, Math.max(0, parseInt(e.target.value) || 0)))}
+              disabled={useDestinyBoard && !!activeCharacter}
+              className={`rounded border px-3 py-2 text-sm ${
+                useDestinyBoard && activeCharacter
+                  ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                  : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'
+              }`}
+            />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-xs text-muted-light dark:text-muted">Spec T5</label>
+            <input
+              type="number"
+              min="0"
+              max="120"
+              value={masteryT5}
+              onChange={(e) => setManualMasteryT5(Math.min(120, Math.max(0, parseInt(e.target.value) || 0)))}
+              disabled={useDestinyBoard && !!activeCharacter}
+              className={`rounded border px-3 py-2 text-sm ${
+                useDestinyBoard && activeCharacter
+                  ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                  : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'
+              }`}
+            />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-xs text-muted-light dark:text-muted">Spec T6</label>
+            <input
+              type="number"
+              min="0"
+              max="120"
+              value={masteryT6}
+              onChange={(e) => setManualMasteryT6(Math.min(120, Math.max(0, parseInt(e.target.value) || 0)))}
+              disabled={useDestinyBoard && !!activeCharacter}
+              className={`rounded border px-3 py-2 text-sm ${
+                useDestinyBoard && activeCharacter
+                  ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                  : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'
+              }`}
+            />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-xs text-muted-light dark:text-muted">Spec T7</label>
+            <input
+              type="number"
+              min="0"
+              max="120"
+              value={masteryT7}
+              onChange={(e) => setManualMasteryT7(Math.min(120, Math.max(0, parseInt(e.target.value) || 0)))}
+              disabled={useDestinyBoard && !!activeCharacter}
+              className={`rounded border px-3 py-2 text-sm ${
+                useDestinyBoard && activeCharacter
+                  ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                  : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'
+              }`}
+            />
+          </div>
+          <div className="grid gap-1">
+            <label className="text-xs text-muted-light dark:text-muted">Spec T8</label>
+            <input
+              type="number"
+              min="0"
+              max="120"
+              value={masteryT8}
+              onChange={(e) => setManualMasteryT8(Math.min(120, Math.max(0, parseInt(e.target.value) || 0)))}
+              disabled={useDestinyBoard && !!activeCharacter}
+              className={`rounded border px-3 py-2 text-sm ${
+                useDestinyBoard && activeCharacter
+                  ? 'border-blue-500/30 bg-blue-500/10 text-blue-300'
+                  : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'
+              }`}
+            />
+          </div>
         </div>
       </div>
 

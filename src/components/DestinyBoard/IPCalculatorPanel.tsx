@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { calculateItemIP } from '@/lib/calculators/ip-calculator';
-import { getMastery, getSpecializationsForMastery, getSpecialization } from '@/data/masteries';
+import { getMastery, getSpecializationsForMastery, getSpecialization } from '@/lib/destiny-board/masteries';
 import { useDestinyBoardStore } from '@/stores/destinyBoardStore';
 
 const TIERS = ['T4', 'T5', 'T6', 'T7', 'T8'];
