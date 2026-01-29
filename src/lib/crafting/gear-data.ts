@@ -4926,7 +4926,15 @@ export function getGearItemId(baseId: string, tier: number, enchant: number = 0)
 
 // Get material item ID for a specific tier/enchant
 export function getMaterialItemId(matType: MaterialType, tier: number, enchant: number = 0): string {
+  if (!matType || !MATERIAL_ITEM_IDS[matType]) {
+    console.error(`Invalid material type: ${matType}`)
+    return ''
+  }
   const baseId = MATERIAL_ITEM_IDS[matType][tier]
+  if (!baseId) {
+    console.error(`Invalid tier ${tier} for material type ${matType}`)
+    return ''
+  }
   return enchant > 0 ? `${baseId}@${enchant}` : baseId
 }
 
