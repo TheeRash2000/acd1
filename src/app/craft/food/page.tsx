@@ -24,10 +24,9 @@ const FOOD_BONUS_CITY = 'Bridgewatch'
 
 // Server to API endpoint mapping
 const SERVER_API_ENDPOINTS: Record<string, string> = {
-  'West': 'https://west.albion-online-data.com',
-  'East': 'https://east.albion-online-data.com',
+  'Americas': 'https://west.albion-online-data.com',
   'Europe': 'https://europe.albion-online-data.com',
-  'Asia': 'https://asia.albion-online-data.com',
+  'Asia': 'https://east.albion-online-data.com',
 }
 
 const CITIES = [
@@ -40,7 +39,7 @@ const CITIES = [
   'Brecilien',
 ]
 
-const SERVERS = ['West', 'East', 'Europe', 'Asia']
+const SERVERS = ['Americas', 'Europe', 'Asia']
 const ROYAL_CITIES = ['Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford']
 
 // Daily bonus multipliers (applies to RRR)
@@ -94,7 +93,7 @@ export default function FoodCraftingPage() {
   // Settings state
   const [craftCity, setCraftCity] = useState('Bridgewatch')
   const [sellCity, setSellCity] = useState('Bridgewatch')
-  const [server, setServer] = useState('West')
+  const [server, setServer] = useState('Americas')
   const [useFocus, setUseFocus] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)

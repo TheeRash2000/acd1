@@ -39,10 +39,9 @@ const MATERIAL_TYPES: {
 
 // Server to API endpoint mapping
 const SERVER_API_ENDPOINTS: Record<string, string> = {
-  'West': 'https://west.albion-online-data.com',
-  'East': 'https://east.albion-online-data.com',
+  'Americas': 'https://west.albion-online-data.com',
   'Europe': 'https://europe.albion-online-data.com',
-  'Asia': 'https://asia.albion-online-data.com',
+  'Asia': 'https://east.albion-online-data.com',
 }
 
 // City to API location mapping
@@ -66,7 +65,7 @@ const CITIES = [
   'Brecilien',
 ]
 
-const SERVERS = ['West', 'East', 'Europe', 'Asia']
+const SERVERS = ['Americas', 'Europe', 'Asia']
 
 const MARKET_TAX_OPTIONS = [
   { label: 'No Tax', value: 0 },
@@ -206,7 +205,7 @@ export default function RefiningPage() {
   // Cities
   const [craftCity, setCraftCity] = useState('Martlock')
   const [sellCity, setSellCity] = useState('Martlock')
-  const [server, setServer] = useState('West')
+  const [server, setServer] = useState('Americas')
 
   // Prices - keyed by "tier.enchant"
   const [rawPrices, setRawPrices] = useState<Record<string, number>>({})
@@ -493,7 +492,7 @@ export default function RefiningPage() {
       const itemList = allItems.join(',')
 
       // Get API endpoint based on server selection
-      const apiEndpoint = SERVER_API_ENDPOINTS[server] || SERVER_API_ENDPOINTS['West']
+      const apiEndpoint = SERVER_API_ENDPOINTS[server] || SERVER_API_ENDPOINTS['Americas']
 
       // Fetch from API - use craftCity for raw materials, sellCity for refined
       const buyLocation = CITY_API_LOCATIONS[craftCity] || craftCity
