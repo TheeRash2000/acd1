@@ -50,6 +50,12 @@ const CITIES = [
   'Brecilien',
 ]
 
+// Cities where you can sell gear (including Black Market)
+const SELL_CITIES = [
+  ...CITIES,
+  'Black Market',
+]
+
 const SERVERS = ['Americas', 'Europe', 'Asia']
 const ROYAL_CITIES = ['Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford']
 
@@ -320,6 +326,10 @@ export default function GearCraftingPage() {
       }
       const qualityNum = qualityMap[quality]
 
+      // For Black Market, we use buy_price_max (what BM will pay us)
+      // For regular cities, we use sell_price_min (what we can sell at)
+      const isBlackMarket = sellCity === 'Black Market'
+
       const gearResponse = await fetch(
         `${apiBase}/api/v2/stats/prices/${gearIds.join(',')}?locations=${sellCity}&qualities=${qualityNum}`
       )
@@ -327,8 +337,16 @@ export default function GearCraftingPage() {
 
       const newGearPrices: Record<string, number> = {}
       for (const item of gearData) {
-        if (item.sell_price_min > 0) {
-          newGearPrices[item.item_id] = item.sell_price_min
+        if (isBlackMarket) {
+          // Black Market: use buy_price_max (instant sell to BM orders)
+          if (item.buy_price_max > 0) {
+            newGearPrices[item.item_id] = item.buy_price_max
+          }
+        } else {
+          // Regular market: use sell_price_min
+          if (item.sell_price_min > 0) {
+            newGearPrices[item.item_id] = item.sell_price_min
+          }
         }
       }
       setGearPrices(newGearPrices)
@@ -596,6 +614,12 @@ export default function GearCraftingPage() {
           REFINING
         </Link>
         <Link
+          href="/tools/blackmarket"
+          className="rounded border border-red-400/50 px-3 py-1 text-red-300 hover:bg-red-400/10"
+        >
+          BLACK MARKET
+        </Link>
+        <Link
           href="/craft"
           className="ml-auto rounded border border-border-light px-3 py-1 text-text1-light hover:text-accent dark:border-border dark:text-text1"
         >
@@ -650,16 +674,19 @@ export default function GearCraftingPage() {
               </div>
             )}
             <div className="grid gap-1">
-              <label className="text-xs text-muted-light dark:text-muted">Sell City</label>
+              <label className="text-xs text-muted-light dark:text-muted">Sell To</label>
               <select
                 value={sellCity}
                 onChange={(e) => setSellCity(e.target.value)}
-                className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
+                className={`rounded border px-3 py-2 text-sm ${sellCity === 'Black Market' ? 'border-red-500 bg-red-500/10 text-red-300' : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'}`}
               >
-                {CITIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                {SELL_CITIES.map((c) => (
+                  <option key={c} value={c}>{c === 'Black Market' ? '🔴 Black Market (Caerleon)' : c}</option>
                 ))}
               </select>
+              {sellCity === 'Black Market' && (
+                <p className="text-[10px] text-red-400">Instant sell to BM buy orders - No tax!</p>
+              )}
             </div>
           </div>
         </div>

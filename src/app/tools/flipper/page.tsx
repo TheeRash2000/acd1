@@ -184,23 +184,34 @@ export default function ItemFlipperPage() {
             const data = priceData[key]
             if (!data) continue
 
-            // For buying, use sell price (instant buy)
-            if (data.sellPrice > 0 && data.sellPrice < bestBuyPrice) {
-              bestBuyPrice = data.sellPrice
-              bestBuyCity = city
-            }
+            // Black Market: Can only SELL TO, not buy from
+            if (city === 'Black Market') {
+              // For selling to BM, use buy price (what BM will pay)
+              if (data.buyPrice > bestSellPrice) {
+                bestSellPrice = data.buyPrice
+                bestSellCity = city
+              }
+            } else {
+              // For buying, use sell price (instant buy) - not from BM
+              if (data.sellPrice > 0 && data.sellPrice < bestBuyPrice) {
+                bestBuyPrice = data.sellPrice
+                bestBuyCity = city
+              }
 
-            // For selling, use sell price (what we can list at)
-            if (data.sellPrice > bestSellPrice) {
-              bestSellPrice = data.sellPrice
-              bestSellCity = city
+              // For selling to regular market, use sell price (what we can list at)
+              if (data.sellPrice > bestSellPrice) {
+                bestSellPrice = data.sellPrice
+                bestSellCity = city
+              }
             }
           }
 
           if (bestBuyPrice === Infinity || bestSellPrice === 0) continue
           if (bestBuyCity === bestSellCity) continue
 
-          const sellAfterTax = bestSellPrice * (1 - taxRate)
+          // No tax when selling to Black Market (instant sell to buy order)
+          const isSellingToBM = bestSellCity === 'Black Market'
+          const sellAfterTax = isSellingToBM ? bestSellPrice : bestSellPrice * (1 - taxRate)
           const profit = sellAfterTax - bestBuyPrice
 
           if (profit < minProfit) continue
@@ -288,6 +299,12 @@ export default function ItemFlipperPage() {
           className="rounded border border-amber-400 bg-amber-400/10 px-3 py-1 text-amber-300"
         >
           FLIPPER
+        </Link>
+        <Link
+          href="/tools/blackmarket"
+          className="rounded border border-red-400/50 px-3 py-1 text-red-300 hover:bg-red-400/10"
+        >
+          BLACK MARKET
         </Link>
         <Link
           href="/craft"
