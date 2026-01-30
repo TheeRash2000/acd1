@@ -568,10 +568,19 @@ export default function FoodCraftingPage() {
             <div className="text-3xl font-bold text-green-400">{returnRatePercent.toFixed(2)}%</div>
             <div className="text-xs text-muted-light dark:text-muted">Material Return</div>
           </div>
+          {locationType === 'city' && (
+            <div className="mb-2 text-center text-xs">
+              <span className={`rounded px-2 py-0.5 ${craftCity === 'Caerleon' ? 'bg-red-500/20 text-red-300' : craftCity === 'Brecilien' ? 'bg-green-500/20 text-green-300' : craftCity === FOOD_BONUS_CITY ? 'bg-amber-500/20 text-amber-300' : ROYAL_CITIES.includes(craftCity) ? 'bg-blue-500/20 text-blue-300' : 'bg-surface-light dark:bg-surface text-muted'}`}>
+                {craftCity}{craftCity === FOOD_BONUS_CITY && ' ⭐'}
+              </span>
+            </div>
+          )}
           <div className="space-y-1 text-xs">
             {bonusBreakdown.base > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-light dark:text-muted">City Base:</span>
+                <span className="text-muted-light dark:text-muted">
+                  {craftCity === 'Caerleon' ? 'Caerleon Base:' : craftCity === 'Brecilien' ? 'Brecilien Base:' : 'City Base:'}
+                </span>
                 <span className="text-text1-light dark:text-text1">+{(bonusBreakdown.base * 100).toFixed(0)}%</span>
               </div>
             )}
