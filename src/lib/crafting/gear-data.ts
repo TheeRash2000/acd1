@@ -3,7 +3,7 @@
 
 export type GearCategory = 1 | 2 | 3 | 4 // 1=Mage, 2=Hunter, 3=Warrior, 4=Toolmaker
 export type GearItemType = 'NORMAL' | 'CRYSTAL' | 'AVALON' | 'RELIC' | 'RUNE' | 'SOUL'
-export type MaterialType = 'PLANKS' | 'METALBAR' | 'LEATHER' | 'CLOTH'
+export type MaterialType = 'PLANKS' | 'METALBAR' | 'LEATHER' | 'CLOTH' | 'STONEBLOCK'
 
 export interface GearRecipe {
   id: string
@@ -59,6 +59,13 @@ export const MATERIAL_ITEM_IDS: Record<MaterialType, Record<number, string>> = {
     6: 'T6_CLOTH',
     7: 'T7_CLOTH',
     8: 'T8_CLOTH',
+  },
+  STONEBLOCK: {
+    4: 'T4_STONEBLOCK',
+    5: 'T5_STONEBLOCK',
+    6: 'T6_STONEBLOCK',
+    7: 'T7_STONEBLOCK',
+    8: 'T8_STONEBLOCK',
   },
 }
 
