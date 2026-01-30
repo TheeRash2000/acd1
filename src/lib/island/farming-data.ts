@@ -406,6 +406,31 @@ export const ISLAND_PLOT_COUNTS: Record<number, number> = {
   6: 6,
 }
 
+// Cities with farming bonuses
+export const FARMING_CITIES = [
+  'Bridgewatch',
+  'Fort Sterling',
+  'Lymhurst',
+  'Martlock',
+  'Thetford',
+  'Caerleon',
+] as const
+
+export type FarmingCity = typeof FARMING_CITIES[number]
+
+// City bonus percentage (+10% yield when farming in bonus city)
+export const CITY_BONUS_PERCENT = 10
+
+// Check if crop/animal gets city bonus
+export function hasCityBonus(bonusCity: string, islandCity: string): boolean {
+  return bonusCity.toLowerCase() === islandCity.toLowerCase()
+}
+
+// Get the yield multiplier including city bonus
+export function getCityBonusMultiplier(bonusCity: string, islandCity: string): number {
+  return hasCityBonus(bonusCity, islandCity) ? 1 + (CITY_BONUS_PERCENT / 100) : 1
+}
+
 // ============ CALCULATION HELPERS ============
 
 export interface CropCalculation {
@@ -422,7 +447,8 @@ export function calculateCropOutput(
   hasPremium: boolean,
   useFocus: boolean,
   daysCount: number = 1,
-  rngBuffer: number = 0.10 // 10% buffer by default
+  rngBuffer: number = 0.10, // 10% buffer by default
+  islandCity: string = '' // City where island is located
 ): CropCalculation {
   const seedsPerDay = plotCount * SEEDS_PER_PLOT
   const totalSeeds = seedsPerDay * daysCount
@@ -430,13 +456,14 @@ export function calculateCropOutput(
   // Add RNG buffer to seeds needed (input)
   const seedsNeededWithBuffer = Math.ceil(totalSeeds * (1 + rngBuffer))
 
-  // Calculate expected yield
+  // Calculate expected yield with city bonus
   const avgYield = hasPremium ? AVERAGE_CROP_YIELD_PREMIUM : AVERAGE_CROP_YIELD_NON_PREMIUM
-  const expectedCropYield = Math.floor(totalSeeds * avgYield)
+  const cityMultiplier = islandCity ? getCityBonusMultiplier(crop.bonusCity, islandCity) : 1
+  const expectedCropYield = Math.floor(totalSeeds * avgYield * cityMultiplier)
 
-  // Calculate seed return
+  // Calculate seed return (city bonus also applies to seed return)
   const seedReturnRate = useFocus ? crop.wateredSeedReturn : crop.baseSeedReturn
-  const expectedSeedReturn = Math.floor(totalSeeds * (seedReturnRate / 100))
+  const expectedSeedReturn = Math.floor(totalSeeds * (seedReturnRate / 100) * cityMultiplier)
 
   return {
     seedsNeeded: totalSeeds,
@@ -463,7 +490,8 @@ export function calculateAnimalOutput(
   useFocus: boolean,
   useFavoriteFeed: boolean,
   daysCount: number = 1,
-  rngBuffer: number = 0.10
+  rngBuffer: number = 0.10,
+  islandCity: string = '' // City where island is located
 ): AnimalCalculation {
   const animalsPerDay = plotCount * ANIMALS_PER_PLOT
   const totalAnimals = animalsPerDay * daysCount
@@ -473,17 +501,20 @@ export function calculateAnimalOutput(
   const feedNeeded = totalAnimals * feedPerAnimal
   const feedNeededWithBuffer = Math.ceil(feedNeeded * (1 + rngBuffer))
 
-  // Produce calculation (for livestock that produce)
+  // City bonus multiplier for produce/meat
+  const cityMultiplier = islandCity ? getCityBonusMultiplier(animal.bonusCity, islandCity) : 1
+
+  // Produce calculation (for livestock that produce) - city bonus applies
   let expectedProduce = 0
   if (animal.produceType !== 'none') {
     const avgProduce = hasPremium ? AVERAGE_PRODUCE_PREMIUM : AVERAGE_PRODUCE_NON_PREMIUM
-    expectedProduce = Math.floor(totalAnimals * avgProduce)
+    expectedProduce = Math.floor(totalAnimals * avgProduce * cityMultiplier)
   }
 
-  // Meat calculation (if butchering)
-  const expectedMeat = totalAnimals * animal.meatYieldBase
+  // Meat calculation (if butchering) - city bonus applies
+  const expectedMeat = Math.floor(totalAnimals * animal.meatYieldBase * cityMultiplier)
 
-  // Offspring (with focus, ~100% return rate)
+  // Offspring (with focus, ~100% return rate) - city bonus does NOT apply to offspring
   const expectedOffspring = useFocus ? totalAnimals : Math.floor(totalAnimals * 0.2)
 
   return {

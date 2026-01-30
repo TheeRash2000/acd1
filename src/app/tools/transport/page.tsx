@@ -47,14 +47,6 @@ const TIER_WEIGHT_MULTIPLIER: Record<number, number> = {
   8: 5.06,
 }
 
-// Enchant weight multiplier
-const ENCHANT_WEIGHT_MULTIPLIER: Record<number, number> = {
-  0: 1,
-  1: 1,
-  2: 1,
-  3: 1,
-}
-
 function getMaterialItemId(matType: string, tier: number, enchant: number): string {
   const baseId = `T${tier}_${matType}`
   if (enchant === 0) return baseId
@@ -79,6 +71,8 @@ interface PriceData {
   buyPrice: number
 }
 
+type SellStrategy = 'sell_order' | 'instant_sell'
+
 interface TransportRoute {
   material: string
   materialName: string
@@ -87,12 +81,13 @@ interface TransportRoute {
   tierLabel: string
   fromCity: string
   toCity: string
-  buyPrice: number
-  sellPrice: number
-  profitPerUnit: number
+  buyPrice: number           // Price to buy in source city (sell order = instant buy)
+  destSellPrice: number      // Lowest sell order in destination (your competition)
+  destBuyPrice: number       // Highest buy order in destination (instant sell)
+  profitPerUnit: number      // Based on selected strategy
   profitPerWeight: number
   weight: number
-  maxUnits: number
+  maxUnits: number           // Based on carry capacity only
   totalProfit: number
 }
 
@@ -105,6 +100,7 @@ export default function TransportCalculatorPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [priceData, setPriceData] = useState<Record<string, PriceData>>({})
   const [taxRate, setTaxRate] = useState(0.065) // 6.5% setup fee
+  const [sellStrategy, setSellStrategy] = useState<SellStrategy>('sell_order')
 
   // Fetch prices from API
   const fetchPrices = useCallback(async () => {
@@ -170,10 +166,23 @@ export default function TransportCalculatorPage() {
 
           if (!fromData || !toData) continue
 
-          const buyPrice = fromData.sellPrice // Buy at sell order price in from city
-          const sellPrice = toData.sellPrice // Sell at sell order price in to city
+          // Buy price = sell order in source city (instant buy)
+          const buyPrice = fromData.sellPrice
+          // Destination prices
+          const destSellPrice = toData.sellPrice  // Competition's price
+          const destBuyPrice = toData.buyPrice    // Instant sell price
 
-          if (buyPrice <= 0 || sellPrice <= 0) continue
+          if (buyPrice <= 0) continue
+
+          // Calculate profit based on strategy
+          let sellPrice: number
+          if (sellStrategy === 'instant_sell') {
+            sellPrice = destBuyPrice
+          } else {
+            sellPrice = destSellPrice
+          }
+
+          if (sellPrice <= 0) continue
 
           const sellAfterTax = sellPrice * (1 - taxRate)
           const profitPerUnit = sellAfterTax - buyPrice
@@ -181,6 +190,7 @@ export default function TransportCalculatorPage() {
           if (profitPerUnit <= 0) continue
 
           const profitPerWeight = profitPerUnit / weight
+          // Max units is based purely on carry capacity
           const maxUnits = Math.floor(maxWeight / weight)
           const totalProfit = profitPerUnit * maxUnits
 
@@ -193,7 +203,8 @@ export default function TransportCalculatorPage() {
             fromCity,
             toCity,
             buyPrice,
-            sellPrice,
+            destSellPrice,
+            destBuyPrice,
             profitPerUnit,
             profitPerWeight,
             weight,
@@ -208,7 +219,7 @@ export default function TransportCalculatorPage() {
     result.sort((a, b) => b.profitPerWeight - a.profitPerWeight)
 
     return result
-  }, [priceData, fromCity, toCity, maxWeight, taxRate])
+  }, [priceData, fromCity, toCity, maxWeight, taxRate, sellStrategy])
 
   // Calculate optimal load (greedy algorithm by profit/weight)
   const optimalLoad = useMemo(() => {
@@ -336,7 +347,7 @@ export default function TransportCalculatorPage() {
         </div>
 
         <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface">
-          <h2 className="mb-3 text-sm font-medium text-text1-light dark:text-text1">Carry Capacity</h2>
+          <h2 className="mb-3 text-sm font-medium text-text1-light dark:text-text1">Settings</h2>
           <div className="grid gap-3">
             <div className="grid gap-1">
               <label className="text-xs text-muted-light dark:text-muted">Max Weight (kg)</label>
@@ -368,7 +379,43 @@ export default function TransportCalculatorPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-green-500/30 bg-green-500/5 p-4 md:col-span-2">
+        <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface">
+          <h2 className="mb-3 text-sm font-medium text-text1-light dark:text-text1">Sell Strategy</h2>
+          <div className="grid gap-3">
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="sellStrategy"
+                checked={sellStrategy === 'sell_order'}
+                onChange={() => setSellStrategy('sell_order')}
+                className="mt-1 h-4 w-4"
+              />
+              <div>
+                <span className={sellStrategy === 'sell_order' ? 'text-amber-400' : 'text-text1-light dark:text-text1'}>
+                  Place Sell Order
+                </span>
+                <p className="text-xs text-muted">Match lowest sell price, wait for buyer</p>
+              </div>
+            </label>
+            <label className="flex cursor-pointer items-start gap-2 text-sm">
+              <input
+                type="radio"
+                name="sellStrategy"
+                checked={sellStrategy === 'instant_sell'}
+                onChange={() => setSellStrategy('instant_sell')}
+                className="mt-1 h-4 w-4"
+              />
+              <div>
+                <span className={sellStrategy === 'instant_sell' ? 'text-blue-400' : 'text-text1-light dark:text-text1'}>
+                  Instant Sell
+                </span>
+                <p className="text-xs text-muted">Sell to highest buy order immediately</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-green-500/30 bg-green-500/5 p-4">
           <h2 className="mb-3 text-sm font-medium text-green-400">Optimal Load</h2>
           <div className="mb-4 grid grid-cols-2 gap-4">
             <div>
@@ -396,6 +443,26 @@ export default function TransportCalculatorPage() {
         </div>
       </div>
 
+      {/* How It Works */}
+      <div className="rounded-2xl border border-blue-500/30 bg-blue-500/5 p-4">
+        <h2 className="mb-2 text-sm font-medium text-blue-400">How the Calculator Works</h2>
+        <div className="grid gap-2 text-xs text-muted-light dark:text-muted md:grid-cols-2">
+          <div>
+            <p className="font-medium text-text1-light dark:text-text1 mb-1">Max Units Calculation:</p>
+            <p>Max Units = Floor(Carry Capacity / Item Weight)</p>
+            <p className="mt-1">This is the maximum you <em>could</em> carry based on weight alone.</p>
+          </div>
+          <div>
+            <p className="font-medium text-text1-light dark:text-text1 mb-1">Important Limitations:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>Does NOT check if enough items are available to buy</li>
+              <li>Does NOT verify buy order volume at destination</li>
+              <li>Always verify market depth in-game before hauling</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Routes Table */}
       <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface">
         <div className="mb-3">
@@ -403,7 +470,7 @@ export default function TransportCalculatorPage() {
             Profitable Routes ({routes.length})
           </h2>
           <p className="text-xs text-muted-light dark:text-muted">
-            {fromCity} → {toCity} | Sorted by silver per kg
+            {fromCity} → {toCity} | Strategy: {sellStrategy === 'instant_sell' ? 'Instant Sell to Buy Orders' : 'Place Sell Order'} | Sorted by silver per kg
           </p>
         </div>
 
@@ -413,11 +480,12 @@ export default function TransportCalculatorPage() {
               <tr className="border-b border-border-light dark:border-border">
                 <th className="px-2 py-2 text-left text-xs font-medium text-muted-light dark:text-muted">Material</th>
                 <th className="px-2 py-2 text-center text-xs font-medium text-muted-light dark:text-muted">Tier</th>
-                <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Buy</th>
-                <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Sell</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-red-400">Buy @</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-amber-400" title="Lowest sell order at destination (your competition)">Dest Sell</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-blue-400" title="Highest buy order at destination (instant sell)">Dest Buy</th>
                 <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Profit/Unit</th>
                 <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Silver/kg</th>
-                <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Max Units</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted" title="Max units based on carry capacity">Max Units</th>
                 <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Max Profit</th>
               </tr>
             </thead>
@@ -431,7 +499,12 @@ export default function TransportCalculatorPage() {
                     </span>
                   </td>
                   <td className="px-2 py-2 text-right text-red-400">{route.buyPrice.toLocaleString()}</td>
-                  <td className="px-2 py-2 text-right text-green-400">{route.sellPrice.toLocaleString()}</td>
+                  <td className="px-2 py-2 text-right text-amber-400">
+                    {route.destSellPrice > 0 ? route.destSellPrice.toLocaleString() : '-'}
+                  </td>
+                  <td className="px-2 py-2 text-right text-blue-400">
+                    {route.destBuyPrice > 0 ? route.destBuyPrice.toLocaleString() : '-'}
+                  </td>
                   <td className="px-2 py-2 text-right text-text1-light dark:text-text1">
                     {route.profitPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </td>
@@ -450,9 +523,25 @@ export default function TransportCalculatorPage() {
 
         {routes.length === 0 && (
           <div className="py-8 text-center text-muted-light dark:text-muted">
-            No profitable routes found. Try a different city combination.
+            No profitable routes found. Try a different city combination or sell strategy.
           </div>
         )}
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-4 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-red-400 font-medium">Buy @</span>
+          <span className="text-muted">Price to buy in source city (sell orders)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-amber-400 font-medium">Dest Sell</span>
+          <span className="text-muted">Lowest sell order at destination (competition)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-blue-400 font-medium">Dest Buy</span>
+          <span className="text-muted">Highest buy order at destination (instant sell)</span>
+        </div>
       </div>
     </section>
   )

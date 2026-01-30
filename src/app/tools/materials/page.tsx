@@ -67,17 +67,75 @@ interface PriceData {
   buyDate: string
 }
 
+interface HistoryDataPoint {
+  itemCount: number
+  avg: number
+  timestamp: string
+}
+
+interface HistoryData {
+  itemId: string
+  city: string
+  history: HistoryDataPoint[]
+}
+
 interface MaterialRow {
   tier: number
   enchant: number
   tierLabel: string
+  itemId: string
   prices: Record<string, PriceData>
-  lowestCity: string
-  lowestPrice: number
-  highestCity: string
-  highestPrice: number
-  priceDiff: number
+  lowestSellCity: string
+  lowestSellPrice: number
+  highestBuyCity: string
+  highestBuyPrice: number
+  spreadDiff: number
 }
+
+// Simple bar chart component for price history
+function PriceChart({ data, label, color }: { data: HistoryDataPoint[], label: string, color: string }) {
+  if (!data || data.length === 0) {
+    return <div className="text-xs text-muted">No history data</div>
+  }
+
+  const maxAvg = Math.max(...data.map(d => d.avg))
+  const minAvg = Math.min(...data.map(d => d.avg))
+  const totalVolume = data.reduce((sum, d) => sum + d.itemCount, 0)
+  const avgPrice = data.reduce((sum, d) => sum + d.avg * d.itemCount, 0) / totalVolume || 0
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-light dark:text-muted">{label}</span>
+        <span className="text-text1-light dark:text-text1">
+          Avg: {Math.round(avgPrice).toLocaleString()} | Vol: {totalVolume.toLocaleString()}
+        </span>
+      </div>
+      <div className="flex items-end gap-0.5 h-16">
+        {data.slice(-14).map((point, idx) => {
+          const height = maxAvg > minAvg ? ((point.avg - minAvg) / (maxAvg - minAvg)) * 100 : 50
+          return (
+            <div
+              key={idx}
+              className="flex-1 min-w-1 rounded-t transition-all hover:opacity-80"
+              style={{
+                height: `${Math.max(10, height)}%`,
+                backgroundColor: color,
+              }}
+              title={`${new Date(point.timestamp).toLocaleDateString()}: ${Math.round(point.avg).toLocaleString()} (${point.itemCount} items)`}
+            />
+          )
+        })}
+      </div>
+      <div className="flex justify-between text-[10px] text-muted">
+        <span>{data.length > 0 ? new Date(data[Math.max(0, data.length - 14)].timestamp).toLocaleDateString() : ''}</span>
+        <span>{data.length > 0 ? new Date(data[data.length - 1].timestamp).toLocaleDateString() : ''}</span>
+      </div>
+    </div>
+  )
+}
+
+type DisplayMode = 'sell' | 'buy' | 'both' | 'spread'
 
 export default function MaterialPriceFinderPage() {
   const [server, setServer] = useState('Americas')
@@ -85,9 +143,12 @@ export default function MaterialPriceFinderPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [priceData, setPriceData] = useState<Record<string, PriceData>>({})
-  const [showBuyOrders, setShowBuyOrders] = useState(false)
+  const [historyData, setHistoryData] = useState<Record<string, HistoryData>>({})
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('both')
+  const [selectedTier, setSelectedTier] = useState<string | null>(null)
 
   const selectedMaterial = MATERIAL_TYPES.find(m => m.id === materialType)
+  const bonusCity = selectedMaterial?.bonusCity || ''
 
   // Fetch prices from API
   const fetchPrices = useCallback(async () => {
@@ -103,10 +164,11 @@ export default function MaterialPriceFinderPage() {
         }
       }
 
-      const response = await fetch(
+      // Fetch current prices
+      const priceResponse = await fetch(
         `${apiBase}/api/v2/stats/prices/${itemIds.join(',')}?locations=${CITIES.join(',')}&qualities=1`
       )
-      const data = await response.json()
+      const data = await priceResponse.json()
 
       const newPriceData: Record<string, PriceData> = {}
       for (const item of data) {
@@ -121,13 +183,31 @@ export default function MaterialPriceFinderPage() {
         }
       }
       setPriceData(newPriceData)
+
+      // Fetch history data for the bonus city
+      const historyResponse = await fetch(
+        `${apiBase}/api/v2/stats/history/${itemIds.join(',')}?locations=${bonusCity}&time-scale=6`
+      )
+      const histData = await historyResponse.json()
+
+      const newHistoryData: Record<string, HistoryData> = {}
+      for (const item of histData) {
+        const key = `${item.item_id}_${item.location}`
+        newHistoryData[key] = {
+          itemId: item.item_id,
+          city: item.location,
+          history: item.data || [],
+        }
+      }
+      setHistoryData(newHistoryData)
+
       setLastUpdated(new Date())
     } catch (error) {
       console.error('Failed to fetch prices:', error)
     } finally {
       setIsLoading(false)
     }
-  }, [server, materialType])
+  }, [server, materialType, bonusCity])
 
   // Auto-fetch on mount and when material/server changes
   useEffect(() => {
@@ -144,24 +224,27 @@ export default function MaterialPriceFinderPage() {
         const tierLabel = getTierLabel(tier, enchant)
 
         const prices: Record<string, PriceData> = {}
-        let lowestPrice = Infinity
-        let lowestCity = ''
-        let highestPrice = 0
-        let highestCity = ''
+        let lowestSellPrice = Infinity
+        let lowestSellCity = ''
+        let highestBuyPrice = 0
+        let highestBuyCity = ''
 
         for (const city of CITIES) {
           const key = `${itemId}_${city}`
           const data = priceData[key]
           if (data) {
             prices[city] = data
-            const price = showBuyOrders ? data.buyPrice : data.sellPrice
-            if (price > 0 && price < lowestPrice) {
-              lowestPrice = price
-              lowestCity = city
+
+            // Track lowest sell price
+            if (data.sellPrice > 0 && data.sellPrice < lowestSellPrice) {
+              lowestSellPrice = data.sellPrice
+              lowestSellCity = city
             }
-            if (price > highestPrice) {
-              highestPrice = price
-              highestCity = city
+
+            // Track highest buy price
+            if (data.buyPrice > highestBuyPrice) {
+              highestBuyPrice = data.buyPrice
+              highestBuyCity = city
             }
           }
         }
@@ -170,25 +253,73 @@ export default function MaterialPriceFinderPage() {
           tier,
           enchant,
           tierLabel,
+          itemId,
           prices,
-          lowestCity,
-          lowestPrice: lowestPrice === Infinity ? 0 : lowestPrice,
-          highestCity,
-          highestPrice,
-          priceDiff: highestPrice - (lowestPrice === Infinity ? 0 : lowestPrice),
+          lowestSellCity,
+          lowestSellPrice: lowestSellPrice === Infinity ? 0 : lowestSellPrice,
+          highestBuyCity,
+          highestBuyPrice,
+          spreadDiff: (lowestSellPrice !== Infinity && highestBuyPrice > 0)
+            ? lowestSellPrice - highestBuyPrice
+            : 0,
         })
       }
     }
 
     return result
-  }, [priceData, materialType, showBuyOrders])
+  }, [priceData, materialType])
 
-  // Get cell color based on if it's lowest/highest
-  const getCellColor = (city: string, row: MaterialRow) => {
-    if (city === row.lowestCity && row.lowestPrice > 0) return 'bg-green-500/20 text-green-400 font-bold'
-    if (city === row.highestCity && row.highestPrice > 0) return 'bg-red-500/10 text-red-400'
+  // Get cell styling based on price comparison
+  const getCellStyle = (city: string, row: MaterialRow, isBuy: boolean) => {
+    if (isBuy) {
+      if (city === row.highestBuyCity && row.highestBuyPrice > 0) {
+        return 'bg-blue-500/20 text-blue-400 font-bold'
+      }
+    } else {
+      if (city === row.lowestSellCity && row.lowestSellPrice > 0) {
+        return 'bg-green-500/20 text-green-400 font-bold'
+      }
+    }
     return ''
   }
+
+  // Format price cell content
+  const formatPriceCell = (data: PriceData | undefined, mode: DisplayMode) => {
+    if (!data) return <span className="text-muted">-</span>
+
+    const sell = data.sellPrice
+    const buy = data.buyPrice
+
+    switch (mode) {
+      case 'sell':
+        return sell > 0 ? sell.toLocaleString() : '-'
+      case 'buy':
+        return buy > 0 ? buy.toLocaleString() : '-'
+      case 'spread':
+        if (sell > 0 && buy > 0) {
+          const spread = sell - buy
+          return (
+            <span className={spread > 0 ? 'text-green-400' : 'text-red-400'}>
+              {spread > 0 ? '+' : ''}{spread.toLocaleString()}
+            </span>
+          )
+        }
+        return '-'
+      case 'both':
+      default:
+        return (
+          <div className="flex flex-col text-xs leading-tight">
+            <span className={sell > 0 ? '' : 'text-muted'}>{sell > 0 ? sell.toLocaleString() : '-'}</span>
+            <span className={`text-blue-400 ${buy > 0 ? '' : 'opacity-50'}`}>{buy > 0 ? buy.toLocaleString() : '-'}</span>
+          </div>
+        )
+    }
+  }
+
+  // Get history for selected tier in bonus city
+  const selectedHistory = selectedTier
+    ? historyData[`${selectedTier}_${bonusCity}`]?.history || []
+    : []
 
   return (
     <section className="grid gap-6">
@@ -198,7 +329,7 @@ export default function MaterialPriceFinderPage() {
             Material Price Finder
           </h1>
           <p className="text-sm text-muted-light dark:text-muted">
-            Compare material prices across all cities to find the best deals.
+            Compare material prices across all cities. Green = lowest sell, Blue = highest buy order.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -246,8 +377,8 @@ export default function MaterialPriceFinderPage() {
         </Link>
       </nav>
 
-      {/* Settings */}
-      <div className="grid gap-4 md:grid-cols-4">
+      {/* Settings and Chart Panel */}
+      <div className="grid gap-4 lg:grid-cols-4">
         <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface">
           <h2 className="mb-3 text-sm font-medium text-text1-light dark:text-text1">Settings</h2>
           <div className="grid gap-3">
@@ -275,39 +406,90 @@ export default function MaterialPriceFinderPage() {
                 ))}
               </select>
             </div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={showBuyOrders}
-                onChange={(e) => setShowBuyOrders(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <span className={showBuyOrders ? 'text-blue-400' : 'text-muted-light dark:text-muted'}>
-                Show Buy Orders
-              </span>
-            </label>
+            <div className="grid gap-1">
+              <label className="text-xs text-muted-light dark:text-muted">Display Mode</label>
+              <select
+                value={displayMode}
+                onChange={(e) => setDisplayMode(e.target.value as DisplayMode)}
+                className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
+              >
+                <option value="both">Sell / Buy Orders</option>
+                <option value="sell">Sell Orders Only</option>
+                <option value="buy">Buy Orders Only</option>
+                <option value="spread">Spread (Sell - Buy)</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface md:col-span-3">
-          <h2 className="mb-3 text-sm font-medium text-text1-light dark:text-text1">
-            {selectedMaterial?.name} - Bonus City: <span className="text-amber-400">{selectedMaterial?.bonusCity}</span>
-          </h2>
-          <div className="grid grid-cols-7 gap-2 text-center text-xs">
-            {CITIES.map((city) => (
-              <div
-                key={city}
-                className={`rounded p-2 ${city === selectedMaterial?.bonusCity ? 'bg-amber-400/20 text-amber-300 font-bold' : 'bg-surface-light dark:bg-surface text-muted-light dark:text-muted'}`}
-              >
-                {city}
-              </div>
-            ))}
+        {/* Price History Chart in Bonus City */}
+        <div className="rounded-2xl border border-amber-400/50 bg-amber-400/5 p-4 lg:col-span-3">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-amber-300">
+              {selectedMaterial?.name} Price History - {bonusCity}
+              <span className="ml-2 text-xs text-muted">(Bonus City +15% RRR)</span>
+            </h2>
+            {selectedTier && (
+              <span className="rounded bg-amber-400/20 px-2 py-1 text-xs text-amber-300">
+                {rows.find(r => r.itemId === selectedTier)?.tierLabel || selectedTier}
+              </span>
+            )}
           </div>
+
+          {selectedTier ? (
+            <PriceChart
+              data={selectedHistory}
+              label="14-Day Price History"
+              color="rgba(251, 191, 36, 0.6)"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-24 text-muted">
+              Click a tier row to view price history
+            </div>
+          )}
+
+          {/* Quick stats for bonus city */}
+          {selectedTier && selectedHistory.length > 0 && (
+            <div className="mt-3 grid grid-cols-4 gap-2 text-xs">
+              <div className="rounded bg-surface-light dark:bg-surface p-2">
+                <div className="text-muted">Min Price</div>
+                <div className="text-text1-light dark:text-text1 font-medium">
+                  {Math.round(Math.min(...selectedHistory.map(h => h.avg))).toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded bg-surface-light dark:bg-surface p-2">
+                <div className="text-muted">Max Price</div>
+                <div className="text-text1-light dark:text-text1 font-medium">
+                  {Math.round(Math.max(...selectedHistory.map(h => h.avg))).toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded bg-surface-light dark:bg-surface p-2">
+                <div className="text-muted">Avg Price</div>
+                <div className="text-text1-light dark:text-text1 font-medium">
+                  {Math.round(selectedHistory.reduce((sum, h) => sum + h.avg, 0) / selectedHistory.length).toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded bg-surface-light dark:bg-surface p-2">
+                <div className="text-muted">Total Volume</div>
+                <div className="text-text1-light dark:text-text1 font-medium">
+                  {selectedHistory.reduce((sum, h) => sum + h.itemCount, 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Price Table */}
       <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs text-muted">
+            {displayMode === 'both' && 'Top: Sell Order (Instant Buy) | Bottom: Buy Order (Instant Sell)'}
+            {displayMode === 'sell' && 'Showing: Sell Orders (price to buy instantly)'}
+            {displayMode === 'buy' && 'Showing: Buy Orders (price to sell instantly)'}
+            {displayMode === 'spread' && 'Showing: Price Spread (Sell - Buy)'}
+          </span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -316,17 +498,21 @@ export default function MaterialPriceFinderPage() {
                 {CITIES.map((city) => (
                   <th
                     key={city}
-                    className={`px-2 py-2 text-right text-xs font-medium ${city === selectedMaterial?.bonusCity ? 'text-amber-400' : 'text-muted-light dark:text-muted'}`}
+                    className={`px-2 py-2 text-right text-xs font-medium ${city === bonusCity ? 'text-amber-400' : 'text-muted-light dark:text-muted'}`}
                   >
                     {city.split(' ')[0]}
                   </th>
                 ))}
-                <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Diff</th>
+                <th className="px-2 py-2 text-right text-xs font-medium text-muted-light dark:text-muted">Best</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.tierLabel} className="border-b border-border-light/50 dark:border-border/50">
+                <tr
+                  key={row.tierLabel}
+                  onClick={() => setSelectedTier(row.itemId)}
+                  className={`border-b border-border-light/50 dark:border-border/50 cursor-pointer hover:bg-amber-400/5 ${selectedTier === row.itemId ? 'bg-amber-400/10' : ''}`}
+                >
                   <td className="px-2 py-2">
                     <span className="rounded bg-amber-400/20 px-1.5 py-0.5 text-xs text-amber-300">
                       {row.tierLabel}
@@ -334,17 +520,34 @@ export default function MaterialPriceFinderPage() {
                   </td>
                   {CITIES.map((city) => {
                     const data = row.prices[city]
-                    const price = showBuyOrders ? data?.buyPrice : data?.sellPrice
+                    const sellStyle = getCellStyle(city, row, false)
+                    const buyStyle = getCellStyle(city, row, true)
+
                     return (
-                      <td key={city} className={`px-2 py-2 text-right ${getCellColor(city, row)}`}>
-                        {price && price > 0 ? price.toLocaleString() : '-'}
+                      <td
+                        key={city}
+                        className={`px-2 py-2 text-right ${displayMode === 'sell' ? sellStyle : displayMode === 'buy' ? buyStyle : ''}`}
+                      >
+                        {displayMode === 'both' && data ? (
+                          <div className="flex flex-col text-xs leading-tight">
+                            <span className={sellStyle}>{data.sellPrice > 0 ? data.sellPrice.toLocaleString() : '-'}</span>
+                            <span className={`text-blue-400 ${buyStyle}`}>{data.buyPrice > 0 ? data.buyPrice.toLocaleString() : '-'}</span>
+                          </div>
+                        ) : (
+                          formatPriceCell(data, displayMode)
+                        )}
                       </td>
                     )
                   })}
-                  <td className="px-2 py-2 text-right">
-                    {row.priceDiff > 0 ? (
-                      <span className="text-green-400">+{row.priceDiff.toLocaleString()}</span>
-                    ) : '-'}
+                  <td className="px-2 py-2 text-right text-xs">
+                    <div className="flex flex-col">
+                      {row.lowestSellPrice > 0 && (
+                        <span className="text-green-400">{row.lowestSellCity.split(' ')[0]}</span>
+                      )}
+                      {row.highestBuyPrice > 0 && (
+                        <span className="text-blue-400">{row.highestBuyCity.split(' ')[0]}</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -357,15 +560,34 @@ export default function MaterialPriceFinderPage() {
       <div className="flex flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-2">
           <div className="h-3 w-3 rounded bg-green-500/20"></div>
-          <span className="text-muted-light dark:text-muted">Lowest Price (Buy Here)</span>
+          <span className="text-muted-light dark:text-muted">Lowest Sell Order (Buy Here)</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded bg-red-500/10"></div>
-          <span className="text-muted-light dark:text-muted">Highest Price</span>
+          <div className="h-3 w-3 rounded bg-blue-500/20"></div>
+          <span className="text-muted-light dark:text-muted">Highest Buy Order (Sell Here)</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="h-3 w-3 rounded bg-amber-400/20"></div>
-          <span className="text-muted-light dark:text-muted">Bonus City (+15% RRR)</span>
+          <span className="text-muted-light dark:text-muted">Bonus City (+15% RRR for refining)</span>
+        </div>
+      </div>
+
+      {/* Tips */}
+      <div className="rounded-2xl border border-border-light bg-surface-light p-4 dark:border-border dark:bg-surface">
+        <h3 className="mb-2 text-sm font-medium text-text1-light dark:text-text1">Understanding the Data</h3>
+        <div className="grid gap-2 text-xs text-muted-light dark:text-muted">
+          <p>
+            <span className="font-medium text-text1-light dark:text-text1">Sell Orders (top)</span> - The price to buy materials instantly from the market.
+          </p>
+          <p>
+            <span className="font-medium text-blue-400">Buy Orders (bottom)</span> - The price you&apos;ll get if you sell materials instantly to existing orders.
+          </p>
+          <p>
+            <span className="font-medium text-amber-400">Bonus City</span> - Refining in this city gives +15% resource return rate for this material.
+          </p>
+          <p>
+            <span className="font-medium">Spread</span> - The difference between sell and buy prices. Larger spreads = more profit potential for market makers.
+          </p>
         </div>
       </div>
     </section>

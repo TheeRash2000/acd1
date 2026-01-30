@@ -1,7 +1,7 @@
 // Island Management Store
 // Uses localStorage for persistence
 
-import { BuildingType } from './farming-data'
+import { BuildingType, ISLAND_PLOT_COUNTS, type FarmingCity } from './farming-data'
 
 // ============ TYPES ============
 
@@ -14,6 +14,26 @@ export interface Worker {
   payRate: number // silver per day
 }
 
+// A plot configuration within an island
+export interface PlotConfig {
+  id: string
+  buildingType: BuildingType
+  cropOrAnimalId: string // e.g., 'wheat', 'chicken'
+}
+
+// A physical island with tier, city, and plot configurations
+export interface Island {
+  id: string
+  name: string
+  tier: 1 | 2 | 3 | 4 | 5 | 6
+  city: FarmingCity
+  workerId: string | null // null = unassigned
+  plots: PlotConfig[] // Each plot can have different building/crop
+  notes: string
+  createdAt: string
+}
+
+// Legacy interface for backwards compatibility - will be migrated
 export interface IslandAssignment {
   id: string
   islandName: string
@@ -23,6 +43,10 @@ export interface IslandAssignment {
   plotCount: number
   notes: string
   createdAt: string
+  // New fields for upgraded islands
+  tier?: 1 | 2 | 3 | 4 | 5 | 6
+  city?: FarmingCity
+  plots?: PlotConfig[]
 }
 
 export interface FarmingDay {
@@ -42,6 +66,47 @@ export interface IslandStore {
     hasPremium: boolean
     useFocus: boolean
     rngBuffer: number // decimal, e.g., 0.10 for 10%
+  }
+}
+
+// Helper to get max plots for an island tier
+export function getMaxPlotsForTier(tier: number): number {
+  return ISLAND_PLOT_COUNTS[tier] || 1
+}
+
+// Helper to create a default plot config
+export function createDefaultPlot(id?: string): PlotConfig {
+  return {
+    id: id || generateId(),
+    buildingType: 'farm',
+    cropOrAnimalId: 'wheat',
+  }
+}
+
+// Migrate old island format to new format with tier/city/plots
+export function migrateIsland(island: IslandAssignment): IslandAssignment {
+  if (island.tier && island.city && island.plots) {
+    return island // Already migrated
+  }
+
+  // Convert old format to new format
+  const tier = Math.min(6, Math.max(1, island.plotCount)) as 1 | 2 | 3 | 4 | 5 | 6
+  const plots: PlotConfig[] = []
+
+  // Create plots based on plotCount, all with the same building/crop
+  for (let i = 0; i < island.plotCount; i++) {
+    plots.push({
+      id: `${island.id}-plot-${i}`,
+      buildingType: island.buildingType,
+      cropOrAnimalId: island.cropOrAnimalId,
+    })
+  }
+
+  return {
+    ...island,
+    tier,
+    city: 'Bridgewatch' as FarmingCity, // Default city
+    plots,
   }
 }
 
@@ -70,7 +135,7 @@ export function loadStore(): IslandStore {
     if (stored) {
       const parsed = JSON.parse(stored)
       // Merge with defaults to ensure all fields exist
-      return {
+      const store: IslandStore = {
         ...getDefaultStore(),
         ...parsed,
         settings: {
@@ -78,6 +143,9 @@ export function loadStore(): IslandStore {
           ...parsed.settings,
         },
       }
+      // Migrate old islands to new format
+      store.islands = store.islands.map(migrateIsland)
+      return store
     }
   } catch (e) {
     console.error('Failed to load island store:', e)
@@ -137,9 +205,34 @@ export function deleteWorker(store: IslandStore, workerId: string): IslandStore 
 // ============ ISLAND OPERATIONS ============
 
 export function addIsland(store: IslandStore, island: Omit<IslandAssignment, 'id' | 'createdAt'>): IslandStore {
+  const id = generateId()
+
+  // Ensure we have the new format fields
+  const tier = (island.tier || Math.min(6, Math.max(1, island.plotCount || 1))) as 1 | 2 | 3 | 4 | 5 | 6
+  const city = island.city || 'Bridgewatch' as FarmingCity
+  const maxPlots = getMaxPlotsForTier(tier)
+
+  // Generate plots if not provided
+  let plots = island.plots
+  if (!plots || plots.length === 0) {
+    plots = []
+    const plotCount = island.plotCount || tier
+    for (let i = 0; i < Math.min(plotCount, maxPlots); i++) {
+      plots.push({
+        id: `${id}-plot-${i}`,
+        buildingType: island.buildingType || 'farm',
+        cropOrAnimalId: island.cropOrAnimalId || 'wheat',
+      })
+    }
+  }
+
   const newIsland: IslandAssignment = {
     ...island,
-    id: generateId(),
+    id,
+    tier,
+    city,
+    plots,
+    plotCount: plots.length,
     createdAt: new Date().toISOString(),
   }
   return {
@@ -151,9 +244,98 @@ export function addIsland(store: IslandStore, island: Omit<IslandAssignment, 'id
 export function updateIsland(store: IslandStore, islandId: string, updates: Partial<IslandAssignment>): IslandStore {
   return {
     ...store,
-    islands: store.islands.map(i =>
-      i.id === islandId ? { ...i, ...updates } : i
-    ),
+    islands: store.islands.map(i => {
+      if (i.id !== islandId) return i
+
+      const updated = { ...i, ...updates }
+
+      // If tier changed, adjust plots
+      if (updates.tier && updates.tier !== i.tier) {
+        const maxPlots = getMaxPlotsForTier(updates.tier)
+        if (updated.plots && updated.plots.length > maxPlots) {
+          updated.plots = updated.plots.slice(0, maxPlots)
+        }
+        updated.plotCount = updated.plots?.length || 0
+      }
+
+      return updated
+    }),
+  }
+}
+
+export function updatePlot(store: IslandStore, islandId: string, plotId: string, updates: Partial<PlotConfig>): IslandStore {
+  return {
+    ...store,
+    islands: store.islands.map(island => {
+      if (island.id !== islandId || !island.plots) return island
+      return {
+        ...island,
+        plots: island.plots.map(plot =>
+          plot.id === plotId ? { ...plot, ...updates } : plot
+        ),
+      }
+    }),
+  }
+}
+
+export function addPlotToIsland(store: IslandStore, islandId: string, plotConfig?: Partial<PlotConfig>): IslandStore {
+  return {
+    ...store,
+    islands: store.islands.map(island => {
+      if (island.id !== islandId) return island
+
+      const maxPlots = getMaxPlotsForTier(island.tier || 1)
+      const currentPlots = island.plots || []
+
+      if (currentPlots.length >= maxPlots) return island // Can't add more plots
+
+      const newPlot: PlotConfig = {
+        id: `${islandId}-plot-${currentPlots.length}`,
+        buildingType: plotConfig?.buildingType || 'farm',
+        cropOrAnimalId: plotConfig?.cropOrAnimalId || 'wheat',
+      }
+
+      return {
+        ...island,
+        plots: [...currentPlots, newPlot],
+        plotCount: currentPlots.length + 1,
+      }
+    }),
+  }
+}
+
+export function removePlotFromIsland(store: IslandStore, islandId: string, plotId: string): IslandStore {
+  return {
+    ...store,
+    islands: store.islands.map(island => {
+      if (island.id !== islandId || !island.plots) return island
+      const newPlots = island.plots.filter(p => p.id !== plotId)
+      return {
+        ...island,
+        plots: newPlots,
+        plotCount: newPlots.length,
+      }
+    }),
+  }
+}
+
+// Set all plots on an island to the same configuration
+export function setAllPlotsUniform(store: IslandStore, islandId: string, buildingType: BuildingType, cropOrAnimalId: string): IslandStore {
+  return {
+    ...store,
+    islands: store.islands.map(island => {
+      if (island.id !== islandId || !island.plots) return island
+      return {
+        ...island,
+        buildingType,
+        cropOrAnimalId,
+        plots: island.plots.map(plot => ({
+          ...plot,
+          buildingType,
+          cropOrAnimalId,
+        })),
+      }
+    }),
   }
 }
 
