@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CharacterSwitch } from './CharacterSwitch'
 import { GoldTicker } from './GoldTicker'
 import { ThemeToggle } from './ThemeToggle'
+import { UserMenu } from './auth'
 export function Navbar() {
   return (
     <header className="parchment border-b border-amber-400/60">
@@ -56,6 +57,7 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <CharacterSwitch />
           <ThemeToggle />
+          <UserMenu />
         </div>
       </div>
       <div className="border-t border-amber-400/40">
