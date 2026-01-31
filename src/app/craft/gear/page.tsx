@@ -50,6 +50,12 @@ const CITIES = [
   'Brecilien',
 ]
 
+// Cities where you can sell gear (including Black Market)
+const SELL_CITIES = [
+  ...CITIES,
+  'Black Market',
+]
+
 const SERVERS = ['Americas', 'Europe', 'Asia']
 const ROYAL_CITIES = ['Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford']
 
@@ -61,12 +67,37 @@ const DAILY_BONUS_MULTIPLIER: Record<string, number> = {
   'Gold': 0.20,
 }
 
-// Category to mastery mapping
-const CATEGORY_MASTERY_MAP: Record<GearCategory, string> = {
-  1: 'mastery_mage',       // Mage Tower
-  2: 'mastery_hunter',     // Hunter Lodge
-  3: 'mastery_warrior',    // Warrior Forge
-  4: 'mastery_toolmaker',  // Toolmaker
+// Category to CRAFTING mastery mapping (NOT combat masteries!)
+// These are the economy/crafting tree masteries, not combat weapon masteries
+const CATEGORY_MASTERY_MAP: Record<GearCategory, string[]> = {
+  1: ['mastery_arcanestaffCrafter', 'mastery_firestaffCrafter', 'mastery_holystaffCrafter', 'mastery_froststaffCrafter', 'mastery_cursedstaffCrafter', 'mastery_naturestaffCrafter'],  // Mage Tower
+  2: ['mastery_bowCrafter', 'mastery_crossbowCrafter', 'mastery_spearCrafter', 'mastery_daggerCrafter', 'mastery_quarterstaffCrafter'],  // Hunter Lodge
+  3: ['mastery_axeCrafter', 'mastery_swordCrafter', 'mastery_maceCrafter', 'mastery_hammerCrafter', 'mastery_plateArmorCrafter', 'mastery_leatherArmorCrafter', 'mastery_clothArmorCrafter'],  // Warrior Forge
+  4: ['mastery_toolmaker'],  // Toolmaker
+}
+
+// Quality chances based on specialization level
+// Formula approximated from Albion Online wiki
+function calculateQualityChances(specLevel: number): Record<string, number> {
+  // Base quality distribution shifts with spec level
+  // At 0 spec: ~100% Normal
+  // At 100+ spec: Significant chances for higher qualities
+  const normalizedSpec = Math.min(specLevel, 120) / 120
+
+  // These are approximations - actual formula may vary
+  const masterpiece = Math.max(0, normalizedSpec * 0.20) // Up to 20% at max spec
+  const excellent = Math.max(0, normalizedSpec * 0.25)   // Up to 25%
+  const outstanding = Math.max(0, normalizedSpec * 0.25) // Up to 25%
+  const good = Math.max(0, normalizedSpec * 0.20)        // Up to 20%
+  const normal = Math.max(0, 1 - masterpiece - excellent - outstanding - good)
+
+  return {
+    Normal: normal * 100,
+    Good: good * 100,
+    Outstanding: outstanding * 100,
+    Excellent: excellent * 100,
+    Masterpiece: masterpiece * 100,
+  }
 }
 
 interface GearRowData {
@@ -147,16 +178,22 @@ export default function GearCraftingPage() {
   const [searchTerm, setSearchTerm] = useState('')
 
   // Get mastery from destiny board based on current category filter
+  // Uses CRAFTING masteries (economy tree), NOT combat masteries
   const getMasteryFromDB = useCallback((category: GearCategory): { mastery: number; spec: number } => {
     if (!useDestinyBoard || !activeCharacter) {
       return { mastery: manualMastery, spec: manualSpec }
     }
 
-    const masteryKey = CATEGORY_MASTERY_MAP[category]
-    const mastery = activeCharacter.masteries[masteryKey] || 0
+    // Get all relevant crafting mastery keys for this category
+    const masteryKeys = CATEGORY_MASTERY_MAP[category]
+    // Use the highest mastery level from any of the relevant crafting masteries
+    const mastery = Math.max(
+      ...masteryKeys.map(key => activeCharacter.masteries[key] || 0),
+      0
+    )
 
-    // For gear, spec is more complex - use highest relevant spec
-    // This is a simplification - real implementation would map items to specific specs
+    // For spec, use manual spec for now (proper item->spec mapping is complex)
+    // TODO: Map specific gear items to their specialization nodes
     const spec = manualSpec
 
     return { mastery, spec }
@@ -289,6 +326,10 @@ export default function GearCraftingPage() {
       }
       const qualityNum = qualityMap[quality]
 
+      // For Black Market, we use buy_price_max (what BM will pay us)
+      // For regular cities, we use sell_price_min (what we can sell at)
+      const isBlackMarket = sellCity === 'Black Market'
+
       const gearResponse = await fetch(
         `${apiBase}/api/v2/stats/prices/${gearIds.join(',')}?locations=${sellCity}&qualities=${qualityNum}`
       )
@@ -296,8 +337,16 @@ export default function GearCraftingPage() {
 
       const newGearPrices: Record<string, number> = {}
       for (const item of gearData) {
-        if (item.sell_price_min > 0) {
-          newGearPrices[item.item_id] = item.sell_price_min
+        if (isBlackMarket) {
+          // Black Market: use buy_price_max (instant sell to BM orders)
+          if (item.buy_price_max > 0) {
+            newGearPrices[item.item_id] = item.buy_price_max
+          }
+        } else {
+          // Regular market: use sell_price_min
+          if (item.sell_price_min > 0) {
+            newGearPrices[item.item_id] = item.sell_price_min
+          }
         }
       }
       setGearPrices(newGearPrices)
@@ -565,6 +614,12 @@ export default function GearCraftingPage() {
           REFINING
         </Link>
         <Link
+          href="/tools/blackmarket"
+          className="rounded border border-red-400/50 px-3 py-1 text-red-300 hover:bg-red-400/10"
+        >
+          BLACK MARKET
+        </Link>
+        <Link
           href="/craft"
           className="ml-auto rounded border border-border-light px-3 py-1 text-text1-light hover:text-accent dark:border-border dark:text-text1"
         >
@@ -619,16 +674,19 @@ export default function GearCraftingPage() {
               </div>
             )}
             <div className="grid gap-1">
-              <label className="text-xs text-muted-light dark:text-muted">Sell City</label>
+              <label className="text-xs text-muted-light dark:text-muted">Sell To</label>
               <select
                 value={sellCity}
                 onChange={(e) => setSellCity(e.target.value)}
-                className="rounded border border-border-light bg-surface-light px-3 py-2 text-sm dark:border-border dark:bg-surface"
+                className={`rounded border px-3 py-2 text-sm ${sellCity === 'Black Market' ? 'border-red-500 bg-red-500/10 text-red-300' : 'border-border-light bg-surface-light dark:border-border dark:bg-surface'}`}
               >
-                {CITIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                {SELL_CITIES.map((c) => (
+                  <option key={c} value={c}>{c === 'Black Market' ? '🔴 Black Market (Caerleon)' : c}</option>
                 ))}
               </select>
+              {sellCity === 'Black Market' && (
+                <p className="text-[10px] text-red-400">Instant sell to BM buy orders - No tax!</p>
+              )}
             </div>
           </div>
         </div>
@@ -722,10 +780,19 @@ export default function GearCraftingPage() {
             <div className="text-3xl font-bold text-green-400">{returnRatePercent.toFixed(2)}%</div>
             <div className="text-xs text-muted-light dark:text-muted">Material Return</div>
           </div>
+          {locationType === 'city' && (
+            <div className="mb-2 text-center text-xs">
+              <span className={`rounded px-2 py-0.5 ${craftCity === 'Caerleon' ? 'bg-red-500/20 text-red-300' : craftCity === 'Brecilien' ? 'bg-green-500/20 text-green-300' : ROYAL_CITIES.includes(craftCity) ? 'bg-amber-500/20 text-amber-300' : 'bg-surface-light dark:bg-surface text-muted'}`}>
+                {craftCity}
+              </span>
+            </div>
+          )}
           <div className="space-y-1 text-xs">
             {bonusBreakdown.base > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-light dark:text-muted">City Base:</span>
+                <span className="text-muted-light dark:text-muted">
+                  {craftCity === 'Caerleon' ? 'Caerleon Base:' : craftCity === 'Brecilien' ? 'Brecilien Base:' : 'City Base:'}
+                </span>
                 <span className="text-text1-light dark:text-text1">+{(bonusBreakdown.base * 100).toFixed(0)}%</span>
               </div>
             )}
@@ -762,6 +829,37 @@ export default function GearCraftingPage() {
             <div className="mt-2 border-t border-border-light pt-2 text-[10px] text-muted-light dark:border-border dark:text-muted">
               +15% bonus city added per item
             </div>
+          </div>
+        </div>
+
+        {/* Quality Chances */}
+        <div className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-4">
+          <h2 className="mb-3 text-sm font-medium text-purple-300">
+            Quality Chances (Spec: {manualSpec})
+          </h2>
+          <div className="space-y-1">
+            {(() => {
+              const chances = calculateQualityChances(manualSpec)
+              return Object.entries(chances).reverse().map(([q, chance]) => (
+                <div key={q} className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <div className="flex justify-between text-xs">
+                      <span className={q === 'Masterpiece' ? 'text-amber-400' : q === 'Excellent' ? 'text-purple-400' : q === 'Outstanding' ? 'text-blue-400' : q === 'Good' ? 'text-green-400' : 'text-muted-light dark:text-muted'}>{q}</span>
+                      <span className="text-text1-light dark:text-text1">{chance.toFixed(1)}%</span>
+                    </div>
+                    <div className="mt-0.5 h-1.5 w-full rounded bg-surface-light dark:bg-surface">
+                      <div
+                        className={`h-full rounded ${q === 'Masterpiece' ? 'bg-amber-400' : q === 'Excellent' ? 'bg-purple-400' : q === 'Outstanding' ? 'bg-blue-400' : q === 'Good' ? 'bg-green-400' : 'bg-gray-400'}`}
+                        style={{ width: `${Math.min(100, chance)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            })()}
+          </div>
+          <div className="mt-2 text-[10px] text-muted-light dark:text-muted">
+            Higher spec = better quality chances
           </div>
         </div>
 

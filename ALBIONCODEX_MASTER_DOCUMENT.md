@@ -1,7 +1,7 @@
 # AlbionCodex Master Document
 
-**Version:** 1.0
-**Date:** 2026-01-27
+**Version:** 2.0
+**Date:** 2026-01-30
 **Purpose:** Unified reference for all AI systems working on this project
 
 ---
@@ -13,11 +13,13 @@
 3. [Data Pipeline](#3-data-pipeline)
 4. [Core Calculators](#4-core-calculators)
 5. [Feature Modules](#5-feature-modules)
-6. [State Management](#6-state-management)
-7. [Integration Points](#7-integration-points)
-8. [Data Provenance](#8-data-provenance)
-9. [Known Gaps & TODOs](#9-known-gaps--todos)
-10. [Optimization Recommendations](#10-optimization-recommendations)
+6. [Economy Tools](#6-economy-tools)
+7. [Black Market Integration](#7-black-market-integration)
+8. [State Management](#8-state-management)
+9. [Integration Points](#9-integration-points)
+10. [Data Provenance](#10-data-provenance)
+11. [Known Gaps & TODOs](#11-known-gaps--todos)
+12. [Optimization Recommendations](#12-optimization-recommendations)
 
 ---
 
@@ -25,10 +27,11 @@
 
 AlbionCodex is a comprehensive toolkit for Albion Online players, providing:
 - **Build Planner** - Create and save equipment loadouts with damage calculations
-- **Crafting Calculator** - Profit analysis with real-time market prices
+- **Crafting Calculators** - Equipment, food, and potion profit analysis with real-time market prices
 - **Market Browser** - Live prices from Albion Online Data Project
 - **Destiny Board** - Character progression tracking (IP and Focus calculations)
 - **Damage Calculator** - Spell damage analysis with resistance profiles
+- **Economy Tools** - Material prices, transport routes, item flipping, Black Market crafting, island management
 
 ### Directory Structure
 
@@ -37,7 +40,17 @@ albion-codex/
 ├── src/
 │   ├── app/                    # Next.js pages
 │   │   ├── build/              # Build planner page
-│   │   ├── craft/              # Crafting calculator
+│   │   ├── craft/              # Crafting calculators
+│   │   │   ├── gear/           # Equipment crafting with quality chances
+│   │   │   ├── food/           # Food recipes
+│   │   │   ├── potions/        # Potion recipes
+│   │   │   └── refining/       # Material refining
+│   │   ├── tools/              # Economy tools
+│   │   │   ├── materials/      # Material price finder
+│   │   │   ├── transport/      # Transport route calculator
+│   │   │   ├── flipper/        # Item arbitrage finder
+│   │   │   ├── blackmarket/    # Black Market crafting
+│   │   │   └── islands/        # Island management
 │   │   ├── market/             # Market browser
 │   │   ├── destiny-board/      # Destiny board UI
 │   │   ├── pvp/                # PvP analysis
@@ -51,6 +64,7 @@ albion-codex/
 │   │   ├── calculators/        # IP and Focus calculators
 │   │   ├── combat/damage/      # Damage calculator
 │   │   ├── crafting/           # Crafting logic
+│   │   ├── destiny-board/      # Destiny board definitions
 │   │   └── data/generated/     # Generated JSON indexes
 │   ├── stores/                 # Zustand state stores
 │   ├── hooks/                  # Custom React hooks
@@ -308,27 +322,61 @@ itemsIndex.json → BuildPage → BuildSlot components
                spellsIndex.json
 ```
 
-### 5.2 Crafting Calculator
+### 5.2 Crafting Calculators
 
-**Location:** `src/app/craft/page.tsx`
+**Locations:**
+- `src/app/craft/gear/page.tsx` - Equipment crafting
+- `src/app/craft/food/page.tsx` - Food recipes
+- `src/app/craft/potions/page.tsx` - Potion crafting
+- `src/app/craft/refining/page.tsx` - Material refining
 
 **Features:**
 - 3000+ craftable items
 - Enchantment level selection (0-4)
 - Quality selection (Normal to Masterpiece)
+- **Quality Chances Display** - Based on specialization level
 - Material cost calculation with RRR (Return Rate Multiplier)
 - Station fee calculation
-- Multi-city price comparison
+- Multi-city price comparison including Black Market
 - Hideout presets with building bonuses
 - Journal profit calculation
 - Price history charts
 - Focus usage toggle
+- **Destiny Board Integration** - Uses economy tree masteries (not combat)
 
-**RRR Sources:**
-- City bonuses (varies by item type)
-- Hideout building tier (0-35%)
-- Food bonus
-- Focus usage (doubles RRR, capped at 50%)
+**RRR System (Resource Return Rate):**
+
+| Source | Bonus | Notes |
+|--------|-------|-------|
+| Royal City Base | 18% | When crafting in royal cities |
+| City Specialty | +15% | For matching item type |
+| Focus Usage | +59% | Capped at ~50% total |
+| Hideout Power (1-9) | Variable | Per level bonus |
+| Zone Quality (1-6) | Variable | Per level bonus |
+| Daily Bonus | Multiplier | Special event multiplier |
+
+**Quality Chances by Spec Level:**
+```typescript
+// Quality chances scale with specialization level
+function getQualityChances(specLevel: number): Record<Quality, number> {
+  // Normal drops, Good/Outstanding/Excellent/Masterpiece increase with spec
+  // At spec 100: Normal ~47%, Good ~30%, Outstanding ~16%, Excellent ~6%, Masterpiece ~1%
+}
+```
+
+**Mastery Integration (CRITICAL):**
+```typescript
+// CORRECT: Use CRAFTING masteries (economy tree)
+const CATEGORY_MASTERY_MAP: Record<GearCategory, string[]> = {
+  1: ['mastery_arcanestaffCrafter', 'mastery_firestaffCrafter', ...], // Mage weapons
+  2: ['mastery_bowCrafter', 'mastery_crossbowCrafter', ...],          // Hunter weapons
+  3: ['mastery_axeCrafter', 'mastery_swordCrafter', ...],             // Warrior weapons
+  4: ['mastery_toolmaker'],                                           // Tools
+}
+
+// WRONG: Combat masteries (do NOT use for crafting)
+// mastery_mage, mastery_hunter, mastery_warrior - these are for COMBAT IP
+```
 
 ### 5.3 Market Browser
 
@@ -374,9 +422,153 @@ interface CharacterSheet {
 
 ---
 
-## 6. State Management
+## 6. Economy Tools
 
-### 6.1 Zustand Stores
+### 6.1 Material Price Finder
+
+**Location:** `src/app/tools/materials/page.tsx`
+
+**Features:**
+- Compare material prices across all cities
+- Display modes: Sell Only, Buy Only, Both, Spread
+- Volume and average statistics
+- Price history charts (click tier to view)
+- Supports all material types including STONEBLOCK
+
+**Supported Materials:**
+- PLANKS (Wood)
+- METALBAR (Ore)
+- LEATHER (Hide)
+- CLOTH (Fiber)
+- STONEBLOCK (Stone)
+
+### 6.2 Transport Calculator
+
+**Location:** `src/app/tools/transport/page.tsx`
+
+**Features:**
+- Calculate profitable material hauling routes
+- Sell strategy selector: Place Sell Order vs Instant Sell
+- Shows destination buy orders for instant sell
+- Max units calculation based on carrying capacity
+- "How It Works" explanation section
+
+**Profit Calculation:**
+```typescript
+const profitPerUnit = sellAfterTax - buyPrice
+const totalProfit = profitPerUnit * units
+```
+
+### 6.3 Item Flipper
+
+**Location:** `src/app/tools/flipper/page.tsx`
+
+**Features:**
+- Find arbitrage opportunities between cities
+- **Black Market Support** - Can only SELL to BM (see section 7)
+- Configurable tax rate
+- Multi-city comparison
+- Shows profit margin and ROI
+
+**Black Market Handling:**
+```typescript
+// BM only has buy orders - you can only sell TO it
+if (city === 'Black Market') {
+  // Use buy_price_max (what BM will pay you)
+  if (data.buyPrice > bestSellPrice) {
+    bestSellPrice = data.buyPrice
+    bestSellCity = city
+  }
+} else {
+  // Regular city - normal buy/sell logic
+}
+
+// No tax when selling to Black Market
+const isSellingToBM = bestSellCity === 'Black Market'
+const sellAfterTax = isSellingToBM ? bestSellPrice : bestSellPrice * (1 - taxRate)
+```
+
+### 6.4 Black Market Flipper
+
+**Location:** `src/app/tools/blackmarket/page.tsx`
+
+**Features:**
+- Craft items specifically for Black Market
+- Shows BM buy orders vs craft costs
+- Equipment only (weapons, armor, off-hands)
+- Profit = BM buy price - craft cost
+
+### 6.5 Island Management
+
+**Location:** `src/app/tools/islands/page.tsx`
+
+**Features:**
+- Manage island plots and workers
+- Farming calculations with yields
+- City bonus support (different islands in different cities)
+- Multi-plot support with tier tracking
+
+---
+
+## 7. Black Market Integration
+
+### 7.1 Overview
+
+The Black Market in Caerleon is a special NPC merchant with unique mechanics:
+
+| Feature | Black Market | Regular Markets |
+|---------|-------------|-----------------|
+| Order Type | Buy orders ONLY | Buy and sell orders |
+| Transaction | You SELL to it | You buy and sell |
+| Market Tax | **No tax** | 2.5% (configurable) |
+| Item Types | **Equipment only** | All items |
+| Location | Caerleon (separate) | All cities |
+
+**IMPORTANT:** Caerleon city market and Black Market are SEPARATE:
+- Caerleon = regular city market
+- Black Market = special NPC merchant in Caerleon
+
+### 7.2 API Handling
+
+```typescript
+// Black Market uses buy_price_max (what they'll pay you)
+// Regular markets use sell_price_min (cheapest sell order)
+
+const CITIES = ['Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Caerleon', 'Brecilien']
+const SELL_CITIES = [...CITIES, 'Black Market'] // Only for sell destination
+
+// API call for Black Market
+const bmResponse = await fetch(`${API_BASE}/prices/${itemIds}?locations=Black Market`)
+const bmData = bmResponse.json()
+// Use: bmData.buy_price_max (NOT sell_price_min)
+```
+
+### 7.3 Item Restrictions
+
+Black Market only accepts **equipment**:
+- ✅ Weapons (swords, axes, staffs, bows, etc.)
+- ✅ Armor (head, chest, shoes)
+- ✅ Off-hands (shields, books, torches)
+- ❌ Food
+- ❌ Potions
+- ❌ Materials
+- ❌ Mounts
+
+### 7.4 Profit Calculation
+
+```typescript
+// When selling to Black Market
+const profit = bmBuyPrice - craftCost  // No tax deduction!
+
+// When selling to regular market
+const profit = (sellPrice * (1 - taxRate)) - cost
+```
+
+---
+
+## 8. State Management
+
+### 8.1 Zustand Stores
 
 | Store | Location | Purpose | Persistence |
 |-------|----------|---------|-------------|
@@ -388,7 +580,7 @@ interface CharacterSheet {
 | `useThemeStore` | `stores/theme.ts` | Dark/light mode | localStorage |
 | `useCharacters` | `stores/characters.ts` | Character data | localStorage |
 
-### 6.2 Custom Hooks
+### 8.2 Custom Hooks
 
 | Hook | Location | Purpose |
 |------|----------|---------|
@@ -401,9 +593,9 @@ interface CharacterSheet {
 
 ---
 
-## 7. Integration Points
+## 9. Integration Points
 
-### 7.1 Current Integration Status
+### 9.1 Current Integration Status
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -436,7 +628,7 @@ interface CharacterSheet {
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 Integration Opportunities
+### 9.2 Integration Opportunities
 
 1. **Destiny Board → Build Planner**
    - Currently: Build uses base IP from itemsIndex
@@ -456,9 +648,9 @@ interface CharacterSheet {
 
 ---
 
-## 8. Data Provenance
+## 10. Data Provenance
 
-### 8.1 Source Mapping
+### 10.1 Source Mapping
 
 | Data | Source | File | Confidence |
 |------|--------|------|------------|
@@ -474,7 +666,7 @@ interface CharacterSheet {
 | Quality bonuses | Wiki + In-game | Constants | HIGH |
 | RRR values | Wiki | Calculations | MEDIUM |
 
-### 8.2 Constants Location
+### 10.2 Constants Location
 
 **File:** `src/constants/albion-constants.ts`
 
@@ -491,26 +683,28 @@ Contains:
 
 ---
 
-## 9. Known Gaps & TODOs
+## 11. Known Gaps & TODOs
 
-### 9.1 Critical Gaps
+### 11.1 Critical Gaps (RESOLVED)
 
-| Gap | Impact | Solution |
-|-----|--------|----------|
-| Mastery data definitions | Destiny Board MasteryTree needs mastery definitions | Create `src/data/masteries/` with combat/crafting/gathering definitions |
-| Destiny Board ↔ Build integration | Build doesn't use character specs for IP | Wire `calculateItemIP()` into BuildPanel |
-| Focus calculator unused | Crafting doesn't use FCE calculation | Wire `calculateFocusCost()` into crafting page |
+| Gap | Impact | Status |
+|-----|--------|--------|
+| Mastery data definitions | Destiny Board MasteryTree needs mastery definitions | ✅ RESOLVED - `src/lib/destiny-board/destinyNodes.ts` |
+| Destiny Board ↔ Build integration | Build doesn't use character specs for IP | Pending |
+| Focus calculator unused | Crafting doesn't use FCE calculation | Pending |
+| **Crafting mastery mapping** | Was using combat masteries instead of crafting | ✅ RESOLVED - Uses economy tree now |
+| **Black Market handling** | Flipper treated BM like regular market | ✅ RESOLVED - Proper buy-order only handling |
 
-### 9.2 Feature TODOs
+### 11.2 Feature TODOs
 
-1. **Mastery Definitions** - Define all 23+ combat masteries with their specs
-2. **Crafting/Refining/Farming/Gathering Trees** - Define non-combat masteries
+1. ~~**Mastery Definitions** - Define all 23+ combat masteries with their specs~~ ✅ Complete
+2. ~~**Crafting/Refining/Farming/Gathering Trees** - Define non-combat masteries~~ ✅ Complete
 3. **"With My Specs" Toggle** - Market tool IP display
 4. **Character Import** - Import specs from game or external source
 5. **Build Sharing** - Generate shareable build links
 6. **Notification System** - Price alerts for market tool
 
-### 9.3 Technical Debt
+### 11.3 Technical Debt
 
 1. Multiple enchantment parsers (3 different implementations)
 2. IP calculation exists in BuildPage and IP calculator separately
@@ -519,9 +713,9 @@ Contains:
 
 ---
 
-## 10. Optimization Recommendations
+## 12. Optimization Recommendations
 
-### 10.1 Architecture Optimizations
+### 12.1 Architecture Optimizations
 
 #### A. Unify IP Calculation
 
@@ -578,7 +772,7 @@ export function parseItemId(itemId: string): {
 }
 ```
 
-### 10.2 Performance Optimizations
+### 12.2 Performance Optimizations
 
 #### A. Lazy Load Heavy Data
 
@@ -601,7 +795,7 @@ const { data: items } = useSWR('/data/itemsIndex.json', fetcher)
 
 **Ensure:** All long lists use virtualization.
 
-### 10.3 Code Quality Optimizations
+### 12.3 Code Quality Optimizations
 
 #### A. Extract Shared Types
 
@@ -633,7 +827,7 @@ export interface IPCalculatorOutput {
 }
 ```
 
-### 10.4 Feature Optimizations
+### 12.4 Feature Optimizations
 
 #### A. Destiny Board Integration Priority
 
@@ -664,7 +858,7 @@ const displayIP = showWithSpecs
   : item.baseItemPower
 ```
 
-### 10.5 Data Pipeline Optimizations
+### 12.5 Data Pipeline Optimizations
 
 #### A. Add Data Validation
 
@@ -690,16 +884,32 @@ Instead of full refetch:
 
 ## Summary
 
-AlbionCodex is a well-structured project with:
+AlbionCodex is a comprehensive, well-structured project with:
 - Solid data pipeline from ao-bin-dumps
-- Correct calculation formulas (IP, Focus, Damage)
-- Comprehensive UI for Build/Craft/Market
+- Correct calculation formulas (IP, Focus, Damage, RRR)
+- Comprehensive UI for Build/Craft/Market/Economy Tools
 - Proper state management with Zustand
+- **Full Black Market integration** (equipment, buy orders only, no tax)
+- **Correct mastery mapping** (uses economy tree for crafting, not combat)
+- **Quality chances display** on gear crafting calculator
+- **Economy tools suite** (material finder, transport, flipper, BM crafter, islands)
 
-**Key Integration Needed:**
-1. Connect Destiny Board to Build Planner
-2. Connect Destiny Board to Crafting
-3. Create mastery/spec definitions
-4. Add "With My Specs" to Market
+**Recently Completed:**
+1. ✅ Black Market integration across calculators and flippers
+2. ✅ Fixed crafting mastery mapping (economy tree, not combat)
+3. ✅ Added quality chances to gear crafting
+4. ✅ Enhanced Material Price Finder with charts/orders
+5. ✅ Transport Calculator with sell strategy options
+6. ✅ Island Management with city bonuses
+7. ✅ STONEBLOCK material support
 
-**Estimated Effort:** 1-2 weeks for full integration
+**Remaining Integration:**
+1. Connect Destiny Board to Build Planner (IP from character specs)
+2. Connect Destiny Board Focus to Crafting (FCE calculations)
+3. Add "With My Specs" to Market Browser
+
+**Key Technical Notes:**
+- Caerleon city ≠ Black Market (separate API locations)
+- Profit = sell price - cost (verified across all calculators)
+- BM uses `buy_price_max`, regular markets use `sell_price_min`
+- Crafting masteries: `mastery_*Crafter` (not `mastery_mage/hunter/warrior`)

@@ -1,6 +1,8 @@
 'use client'
 import { useEffect } from 'react'
 import { useTheme } from '@/stores/theme'
+import { AuthProvider } from '@/components/auth'
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const dark = useTheme((s) => s.dark)
   useEffect(() => {
@@ -9,5 +11,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
     root.classList.toggle('dark', dark)
     body.classList.toggle('dark', dark)
   }, [dark])
-  return <>{children}</>
+  return <AuthProvider>{children}</AuthProvider>
 }
