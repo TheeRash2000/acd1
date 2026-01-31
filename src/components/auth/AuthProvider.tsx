@@ -1,13 +1,14 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 
 interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
+  isConfigured: boolean
   signOut: () => Promise<void>
 }
 
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  isConfigured: false,
   signOut: async () => {},
 })
 
@@ -30,14 +32,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isConfigured, setIsConfigured] = useState(false)
 
   useEffect(() => {
+    // Check if Supabase is configured
+    const configured = isSupabaseConfigured()
+    setIsConfigured(configured)
+
+    if (!configured) {
+      setLoading(false)
+      return
+    }
+
     const supabase = createClient()
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
+      setLoading(false)
+    }).catch(() => {
       setLoading(false)
     })
 
@@ -54,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = async () => {
+    if (!isConfigured) return
     const supabase = createClient()
     await supabase.auth.signOut()
     setUser(null)
@@ -61,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isConfigured, signOut }}>
       {children}
     </AuthContext.Provider>
   )
