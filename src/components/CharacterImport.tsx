@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
-import { useCharacters } from '@/stores/characters'
+import { useDestinyBoardStore } from '@/stores/destinyBoardStore'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -12,7 +12,7 @@ type CharacterImportProps = {
 export function CharacterImport({ onImported }: CharacterImportProps) {
   const [name, setName] = useState('')
   const lastSavedKey = useRef<string | null>(null)
-  const addCharacter = useCharacters((s) => s.addCharacter)
+  const createCharacter = useDestinyBoardStore((s) => s.createCharacter)
   const { data, error, isValidating, mutate } = useSWR(
     name ? `/api/killboard/${encodeURIComponent(name)}` : null,
     fetcher,
@@ -25,10 +25,11 @@ export function CharacterImport({ onImported }: CharacterImportProps) {
     const server = data?.server ?? data?.ServerName ?? data?.data?.server ?? 'Unknown'
     const key = `${resolvedName}:${server}`
     if (lastSavedKey.current === key) return
-    addCharacter({ name: resolvedName, server, lastFetched: Date.now() })
+    // Create character in destiny board store
+    createCharacter(resolvedName)
     lastSavedKey.current = key
     onImported?.()
-  }, [data, addCharacter, name, onImported])
+  }, [data, createCharacter, name, onImported])
 
   return (
     <form
