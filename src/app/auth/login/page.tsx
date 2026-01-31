@@ -1,15 +1,8 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useState } from 'react'
-
-const isConfigured =
-  typeof window !== 'undefined' &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project.supabase.co' &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'your-anon-key'
+import { Suspense, useState, useEffect } from 'react'
 
 function LoginContent() {
   const searchParams = useSearchParams()
@@ -17,6 +10,11 @@ function LoginContent() {
   const redirectTo = searchParams.get('redirectTo') || '/'
   const [isLoading, setIsLoading] = useState<'discord' | 'google' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isConfigured, setIsConfigured] = useState(true)
+
+  useEffect(() => {
+    setIsConfigured(isSupabaseConfigured())
+  }, [])
 
   const handleDiscordLogin = async () => {
     if (!isConfigured) {
