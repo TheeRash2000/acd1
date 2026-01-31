@@ -3,18 +3,17 @@
 import { useAuth } from '@/components/auth'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useCallback } from 'react'
-import {
-  getLocalData,
-  uploadToCloud,
-  downloadFromCloud,
-  getCloudStats,
-  type SyncResult,
-} from '@/lib/sync/syncService'
+import { getLocalData } from '@/lib/sync/syncService'
 
 interface DataStats {
   characters: number
   builds: number
   favorites: number
+}
+
+interface SyncResult {
+  success: boolean
+  message: string
 }
 
 export default function SyncPage() {
@@ -35,16 +34,24 @@ export default function SyncPage() {
       favorites: local.favorites.length,
     })
 
-    // Get cloud stats
+    // Get cloud stats via API
     if (user) {
       setLoadingCloud(true)
-      const cloud = await getCloudStats(user.id)
-      if (cloud) {
-        setCloudStats({
-          characters: cloud.characters,
-          builds: cloud.builds,
-          favorites: cloud.hasPreferences ? 1 : 0,
-        })
+      try {
+        const res = await fetch('/api/sync')
+        if (res.ok) {
+          const data = await res.json()
+          setCloudStats({
+            characters: data.characters?.length || 0,
+            builds: data.builds?.length || 0,
+            favorites: data.preferences ? 1 : 0,
+          })
+        } else {
+          setCloudStats(null)
+        }
+      } catch (e) {
+        console.error('Error fetching cloud stats:', e)
+        setCloudStats(null)
       }
       setLoadingCloud(false)
     }
@@ -67,13 +74,25 @@ export default function SyncPage() {
     setSyncing('upload')
     setResult(null)
 
-    const uploadResult = await uploadToCloud(user.id)
-    setResult(uploadResult)
-    setSyncing(null)
+    try {
+      const localData = getLocalData()
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localData),
+      })
+      const data = await res.json()
 
-    if (uploadResult.success) {
-      await refreshStats()
+      if (res.ok) {
+        setResult({ success: true, message: data.message || 'Upload successful' })
+        await refreshStats()
+      } else {
+        setResult({ success: false, message: data.error || 'Upload failed' })
+      }
+    } catch (e) {
+      setResult({ success: false, message: 'Upload failed: ' + String(e) })
     }
+    setSyncing(null)
   }
 
   const handleDownload = async () => {
@@ -81,14 +100,88 @@ export default function SyncPage() {
     setSyncing('download')
     setResult(null)
 
-    const downloadResult = await downloadFromCloud(user.id)
-    setResult(downloadResult)
-    setSyncing(null)
+    try {
+      const res = await fetch('/api/sync')
+      if (!res.ok) {
+        setResult({ success: false, message: 'Download failed' })
+        setSyncing(null)
+        return
+      }
 
-    if (downloadResult.success) {
-      await refreshStats()
-      // Reload page to reflect new data in stores
+      const data = await res.json()
+
+      // Update localStorage - Characters (destiny board store)
+      if (data.characters && data.characters.length > 0) {
+        const destinyBoardData = {
+          state: {
+            activeCharacter: {
+              id: data.characters[0].id,
+              name: data.characters[0].name,
+              masteries: data.characters[0].masteries || {},
+              specializations: data.characters[0].specializations || {},
+              createdAt: data.characters[0].created_at,
+              updatedAt: data.characters[0].updated_at,
+            },
+            characters: data.characters.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              masteries: c.masteries || {},
+              specializations: c.specializations || {},
+              createdAt: c.created_at,
+              updatedAt: c.updated_at,
+            })),
+          },
+          version: 1,
+        }
+        localStorage.setItem('destiny-board-storage', JSON.stringify(destinyBoardData))
+      }
+
+      // Update localStorage - Builds
+      if (data.builds && data.builds.length > 0) {
+        const buildsData = {
+          state: {
+            current: { name: 'New Build', ip: 0, manualIp: null },
+            builds: data.builds.map((b: any) => ({
+              id: b.id,
+              name: b.name,
+              ...(b.slots || {}),
+              ip: b.ip,
+              manualIp: b.manual_ip,
+              timestamp: new Date(b.updated_at).getTime(),
+            })),
+          },
+        }
+        localStorage.setItem('builds', JSON.stringify(buildsData))
+      }
+
+      // Update localStorage - Preferences
+      if (data.preferences) {
+        if (data.preferences.favorites) {
+          localStorage.setItem('albion-market-favorites', JSON.stringify(data.preferences.favorites))
+        }
+        if (data.preferences.theme) {
+          localStorage.setItem('theme', JSON.stringify({
+            state: { dark: data.preferences.theme === 'dark' },
+          }))
+        }
+        if (data.preferences.market_server) {
+          localStorage.setItem('albion-market-server', JSON.stringify({
+            state: { server: data.preferences.market_server },
+          }))
+        }
+      }
+
+      setResult({
+        success: true,
+        message: `Downloaded ${data.characters?.length || 0} characters and ${data.builds?.length || 0} builds`,
+      })
+      setSyncing(null)
+
+      // Reload page to reflect new data
       window.location.reload()
+    } catch (e) {
+      setResult({ success: false, message: 'Download failed: ' + String(e) })
+      setSyncing(null)
     }
   }
 
