@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { useTheme } from '@/stores/theme'
 import { AuthProvider } from '@/components/auth'
+import { AutoSyncProvider } from '@/components/AutoSyncProvider'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const dark = useTheme((s) => s.dark)
@@ -11,5 +12,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     root.classList.toggle('dark', dark)
     body.classList.toggle('dark', dark)
   }, [dark])
-  return <AuthProvider>{children}</AuthProvider>
+  return (
+    <AuthProvider>
+      <AutoSyncProvider>{children}</AutoSyncProvider>
+    </AuthProvider>
+  )
 }

@@ -8,7 +8,8 @@ import { BuildCompare } from '@/components/BuildCompare'
 import { BuildPanel } from '@/components/BuildPanel'
 import { BuildLoadoutStrip } from '@/components/BuildLoadoutStrip'
 import { BuildViewModal } from '@/components/BuildViewModal'
-import { useBuilds, type BuildItemRef, type ItemQuality } from '@/stores/builds'
+import { ShareBuildModal } from '@/components/ShareBuildModal'
+import { useBuilds, type BuildItemRef, type ItemQuality, type Build } from '@/stores/builds'
 import { useCharacterSync } from '@/stores/characterSync'
 import { COMMUNITY_BUILDS } from '@/data/communityBuilds'
 
@@ -73,6 +74,7 @@ export default function BuildPage() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelCharacter, setPanelCharacter] = useState('')
   const [viewBuildId, setViewBuildId] = useState<string | null>(null)
+  const [shareBuild, setShareBuild] = useState<Build | null>(null)
   const [openCommunityId, setOpenCommunityId] = useState<string | null>(null)
   const [openSavedId, setOpenSavedId] = useState<string | null>(null)
   const [pickerSlotKey, setPickerSlotKey] = useState<string | null>(null)
@@ -392,6 +394,13 @@ export default function BuildPage() {
                             >
                               View
                             </button>
+                            <button
+                              className="btn-forge px-3 py-1 text-xs"
+                              type="button"
+                              onClick={() => setShareBuild(build)}
+                            >
+                              Share
+                            </button>
                           </div>
                         </div>
                       )}
@@ -567,6 +576,13 @@ export default function BuildPage() {
         <BuildViewModal
           build={builds.find((build) => build.id === viewBuildId)!}
           onClose={() => setViewBuildId(null)}
+        />
+      )}
+
+      {shareBuild && (
+        <ShareBuildModal
+          build={shareBuild}
+          onClose={() => setShareBuild(null)}
         />
       )}
     </section>

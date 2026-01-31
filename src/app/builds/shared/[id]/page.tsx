@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useBuilds } from '@/stores/builds'
+import { useDestinyBoardStore } from '@/stores/destinyBoardStore'
 
 interface BuildSlots {
   weapon?: { uniquename: string; tier: number; enchant: number; quality: string }
@@ -52,6 +53,58 @@ export default function SharedBuildPage() {
   const [copied, setCopied] = useState(false)
 
   const { setSlot, setName, saveBuild } = useBuilds()
+  const { characters, activeCharacter, setActiveCharacter } = useDestinyBoardStore()
+
+  // Calculate IP bonus based on character specs
+  const ipCalculation = useMemo(() => {
+    if (!build || !activeCharacter) return null
+
+    const weaponId = build.slots?.weapon?.uniquename
+    if (!weaponId) return null
+
+    // Extract weapon type from ID (e.g., T8_MAIN_SPEAR -> SPEAR)
+    const parts = weaponId.split('_')
+    const weaponType = parts.slice(2).join('_') // Get everything after T8_MAIN_
+
+    // Look for matching mastery/specialization in character data
+    // This is a simplified calculation - real IP calc is more complex
+    const masteries = activeCharacter.masteries || {}
+    const specs = activeCharacter.specializations || {}
+
+    // Find relevant spec levels (simplified - would need proper mapping in production)
+    let specLevel = 0
+    let masteryLevel = 0
+
+    // Check if any spec keys contain the weapon type
+    for (const [key, level] of Object.entries(specs)) {
+      if (key.toLowerCase().includes(weaponType.toLowerCase())) {
+        specLevel = Math.max(specLevel, level as number)
+      }
+    }
+
+    for (const [key, level] of Object.entries(masteries)) {
+      if (key.toLowerCase().includes(weaponType.toLowerCase()) ||
+          key.toLowerCase().includes('fighter') ||
+          key.toLowerCase().includes('warrior')) {
+        masteryLevel = Math.max(masteryLevel, level as number)
+      }
+    }
+
+    // IP calculation:
+    // - Mastery: 0.2 IP per level
+    // - Spec: 2.0 IP per level (unique) + 0.2 IP per level (mutual)
+    const masteryBonus = masteryLevel * 0.2
+    const specBonus = specLevel * 2.2 // unique + mutual for simple weapons
+
+    return {
+      weaponType,
+      masteryLevel,
+      specLevel,
+      masteryBonus: Math.round(masteryBonus * 10) / 10,
+      specBonus: Math.round(specBonus * 10) / 10,
+      totalBonus: Math.round((masteryBonus + specBonus) * 10) / 10,
+    }
+  }, [build, activeCharacter])
 
   useEffect(() => {
     async function fetchBuild() {
@@ -195,6 +248,69 @@ export default function SharedBuildPage() {
             {filledSlots.length}/{SLOT_LABELS.length}
           </p>
         </div>
+      </div>
+
+      {/* Your IP Calculation */}
+      <div className="mb-6 rounded-lg border border-accent/30 bg-accent/5 p-4 dark:border-accent/30 dark:bg-accent/10">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-medium text-text1-light dark:text-text1">Your IP with this Build</h2>
+          {characters.length > 0 && (
+            <select
+              value={activeCharacter?.id || ''}
+              onChange={(e) => setActiveCharacter(e.target.value)}
+              className="rounded border border-border-light bg-bg-light px-2 py-1 text-sm dark:border-border dark:bg-bg"
+            >
+              <option value="">Select character...</option>
+              {characters.map((char) => (
+                <option key={char.id} value={char.id}>
+                  {char.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {characters.length === 0 ? (
+          <p className="text-sm text-muted-light dark:text-muted">
+            <Link href="/destiny-board" className="text-accent hover:underline">
+              Create a character
+            </Link>{' '}
+            in the Destiny Board to see your personalized IP calculation.
+          </p>
+        ) : !activeCharacter ? (
+          <p className="text-sm text-muted-light dark:text-muted">
+            Select a character to see your IP with this build.
+          </p>
+        ) : ipCalculation ? (
+          <div className="grid gap-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-light dark:text-muted">Base IP</span>
+              <span className="text-text1-light dark:text-text1">{build.ip || 0}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-light dark:text-muted">
+                Mastery Bonus (Lv. {ipCalculation.masteryLevel})
+              </span>
+              <span className="text-green-500">+{ipCalculation.masteryBonus}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-light dark:text-muted">
+                Spec Bonus (Lv. {ipCalculation.specLevel})
+              </span>
+              <span className="text-green-500">+{ipCalculation.specBonus}</span>
+            </div>
+            <div className="mt-1 flex justify-between border-t border-border-light pt-2 dark:border-border">
+              <span className="font-medium text-text1-light dark:text-text1">Your Total IP</span>
+              <span className="text-lg font-bold text-accent">
+                {Math.round((build.ip || 0) + ipCalculation.totalBonus)}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-light dark:text-muted">
+            IP calculation not available for this weapon type.
+          </p>
+        )}
       </div>
 
       {/* Equipment Grid */}
