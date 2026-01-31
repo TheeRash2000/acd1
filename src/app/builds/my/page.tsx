@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth'
-import { createClient } from '@/lib/supabase/client'
 
 interface Build {
   id: string
@@ -37,19 +36,15 @@ export default function MyBuildsPage() {
 
       setLoading(true)
       try {
-        const supabase = createClient()
-        const { data, error: fetchError } = await supabase
-          .from('builds')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false })
+        const res = await fetch('/api/builds?mine=true')
+        const data = await res.json()
 
-        if (fetchError) {
-          setError(fetchError.message)
+        if (!res.ok) {
+          setError(data.error || 'Failed to load builds')
           return
         }
 
-        setBuilds(data || [])
+        setBuilds(data.builds || [])
       } catch (err) {
         setError('Failed to load builds')
       } finally {
